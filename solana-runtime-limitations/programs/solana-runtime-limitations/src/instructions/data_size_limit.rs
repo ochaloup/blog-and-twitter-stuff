@@ -1,5 +1,10 @@
 use anchor_lang::prelude::*;
 
+#[account]
+pub struct DataSizeLimitAccount {
+    var_string: String
+}
+
 #[derive(Accounts)]
 #[instruction(params: DataSizeLimitParams)]
 pub struct DataSizeLimit<'info> {
@@ -8,7 +13,7 @@ pub struct DataSizeLimit<'info> {
         payer = payer,
         space = params.space as usize,
     )]
-    data_account: Account<'info, DataAccount>,
+    data_account: Account<'info, DataSizeLimitAccount>,
 
     #[account(mut)]
     payer: Signer<'info>,
@@ -18,8 +23,8 @@ pub struct DataSizeLimit<'info> {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
 pub struct DataSizeLimitParams {
-    space: u16,
-    data: String
+    pub space: u16,
+    pub data: String
 }
 
 impl<'info> DataSizeLimit<'info> {
@@ -28,13 +33,8 @@ impl<'info> DataSizeLimit<'info> {
         param: DataSizeLimitParams
     ) -> Result<()> {
         self.data_account.set_inner(
-            DataAccount { var_string: param.data }
+            DataSizeLimitAccount { var_string: param.data }
         );
         Ok(())
     }
-}
-
-#[account]
-pub struct DataAccount {
-    var_string: String
 }
