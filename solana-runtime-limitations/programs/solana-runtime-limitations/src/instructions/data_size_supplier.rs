@@ -1,11 +1,10 @@
-use anchor_lang::prelude::*;
 use crate::DataSizeLimitAccount;
+use anchor_lang::prelude::*;
 
 #[account]
 pub struct DataSupplierAccount {
-    var_string: String
+    var_string: String,
 }
-
 
 // --- INIT of the account
 #[derive(Accounts)]
@@ -25,17 +24,13 @@ pub struct DataSizeSupplierInit<'info> {
 }
 
 impl<'info> DataSizeSupplierInit<'info> {
-    pub fn process(
-        &mut self,
-        _space: u16
-    ) -> Result<()> {
-        self.data_account.set_inner(
-            DataSupplierAccount { var_string: "".to_string() }
-        );
+    pub fn process(&mut self, _space: u16) -> Result<()> {
+        self.data_account.set_inner(DataSupplierAccount {
+            var_string: "".to_string(),
+        });
         Ok(())
     }
 }
-
 
 // --- ADD data in chunks into acccount
 #[derive(Accounts)]
@@ -45,15 +40,11 @@ pub struct DataSizeSupplierAdd<'info> {
 }
 
 impl<'info> DataSizeSupplierAdd<'info> {
-    pub fn process(
-        &mut self,
-        addition: String,
-    ) -> Result<()> {
+    pub fn process(&mut self, addition: String) -> Result<()> {
         self.data_account.var_string += addition.as_str();
         Ok(())
     }
 }
-
 
 // --- DATA SIZE LIMIT initialization in one go
 #[derive(Accounts)]
@@ -74,21 +65,11 @@ pub struct DataSizeSupplierCpi<'info> {
 }
 
 impl<'info> DataSizeSupplierCpi<'info> {
-    pub fn process(
-        &mut self,
-    ) -> Result<()> {
-        let cpi_program = self.data_size_limit_program.to_account_info();
-        let cpi_accounts = DataSizeLimit {
-            data_account: self.data_size_limit_account.to_account_info(),
-            payer: self.payer.to_account_info(),
-            system_program: self.system_program.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        crate::cpi::data_size_limit(cpi_ctx, DataSizeLimitParams{
-            data: self.data_account.var_string.clone(),
-            space: 8 + 4 + self.data_account.var_string.len() as u16,
-        })?;
+    pub fn process(&mut self) -> Result<()> {
+        self.data_size_limit_account
+            .set_inner(DataSizeLimitAccount {
+                var_string: self.data_account.var_string.clone(),
+            });
         Ok(())
     }
 }
-

@@ -1,8 +1,8 @@
 mod instructions;
 
-use anchor_lang::prelude::*;
 use crate::instructions::data_size_limit::*;
 use crate::instructions::data_size_supplier::*;
+use anchor_lang::prelude::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -21,11 +21,14 @@ pub mod solana_runtime_limitations {
         ctx.accounts.process(space)
     }
 
-    pub fn data_size_supplier_add(ctx: Context<DataSizeSupplierAdd>, addition: String) -> Result<()> {
+    pub fn data_size_supplier_add(
+        ctx: Context<DataSizeSupplierAdd>,
+        addition: String,
+    ) -> Result<()> {
         ctx.accounts.process(addition)
     }
 
-    // pub fn data_size_supplier_cpi(ctx: Context<DataSizeSupplierCpi>) -> Result<()> {
-    //     ctx.accounts.process()
-    // }
+    pub fn data_size_supplier_cpi(ctx: Context<DataSizeSupplierCpi>) -> Result<()> {
+        ctx.accounts.process()
+    }
 }
