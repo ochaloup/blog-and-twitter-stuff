@@ -5,7 +5,7 @@ use crate::instructions::data_size_reallocate::*;
 use crate::instructions::data_size_supplier::*;
 use anchor_lang::prelude::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("6rtKQYnusfX9bXu4c5x26j6JkTefJmHExhpc5oEHCgj7");
 
 #[program]
 pub mod solana_runtime_limitations {

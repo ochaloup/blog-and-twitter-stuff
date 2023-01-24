@@ -4,7 +4,9 @@ import {
   ComputeBudgetProgram,
   Finality,
   Keypair,
+  PublicKey,
   SystemProgram,
+  TransactionInstruction,
   VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
@@ -12,6 +14,7 @@ import { BroadcastOptions, PendingTransaction, SolanaProvider, TransactionEnvelo
 import { SolanaRuntimeLimitations } from "../target/types/solana_runtime_limitations";
 import { expect } from "chai";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
+import { BN } from "bn.js";
 
 describe("solana-runtime-limitations", () => {
   // Configure the client to use the local cluster.
@@ -20,10 +23,8 @@ describe("solana-runtime-limitations", () => {
   const program = anchor.workspace
   .SolanaRuntimeLimitations as Program<SolanaRuntimeLimitations>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
+
   provider.opts.skipPreflight = true
-  // provider.opts.commitment = "confirmed"
-  // provider.opts.preflightCommitment = "confirmed"
-  // anchor.setProvider(anchor.AnchorProvider.local(undefined, provider.opts))
   const solanaProvider = SolanaProvider.init({
     connection: provider.connection,
     wallet: provider.wallet,
@@ -108,7 +109,7 @@ describe("solana-runtime-limitations", () => {
       .signers([dataSizeLimitAccount])
       .rpc();
     const dataSizeLimit = await program.account.dataSizeLimitAccount.fetch(
-      accountKey.publicKey
+      dataSizeLimitAccount.publicKey
     );
     expect(dataSizeLimit.varString).equal(data.repeat(interations));
   });
@@ -124,19 +125,20 @@ describe("solana-runtime-limitations", () => {
       .signers([accountKey])
       .rpc();
     const data = "a".repeat(918);
-    const interations = 12;
+    const interations = 11;
     for (let i = 1; i <= interations; i++) {
       console.log("iiiiiiiiiiii", i)
       if (i < 12) {
-      const tx = await program.methods
-        .dataSizeReallocateAdd(data)
-        .accountsStrict({
-          dataAccount: accountKey.publicKey,
-          payer: provider.publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
+        const tx = await program.methods
+          .dataSizeReallocateAdd(data)
+          .accountsStrict({
+            dataAccount: accountKey.publicKey,
+            payer: provider.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
       } else {
+        // TODO: not possible to exceed heap frame with IX requestHeapFrame
         const ix = await program.methods
           .dataSizeReallocateAdd(data)
           .accountsStrict({
@@ -145,13 +147,8 @@ describe("solana-runtime-limitations", () => {
             systemProgram: SystemProgram.programId,
           })
           .instruction();
-        
-        const signature = await provider.connection.sendTransaction(tx, [(provider.wallet as NodeWallet).payer], {skipPreflight: true})
-        let txn = await provider.connection.getParsedTransaction(signature, "confirmed")
-        while (!txn) {
-          txn = await provider.connection.getParsedTransaction(signature, "confirmed")
-        }
-        console.log(i, "messages:", txn)
+        const tx = new TransactionEnvelope(solanaProvider, [ix])       
+        await executeTx({tx, printLogs: true, exceedHeapFrame: 10 * 1024})
       }
     }
     const reallocateAccount = await program.account.dataSizeReallocateAccount.fetch(
@@ -159,7 +156,6 @@ describe("solana-runtime-limitations", () => {
     );
     expect(reallocateAccount.varString).equal(data.repeat(interations));
 
-    console.log("going to setup..................")
     const dataSizeLimitAccount = Keypair.generate();
     await program.methods
       .dataSizeReallocateSetup()
@@ -172,7 +168,7 @@ describe("solana-runtime-limitations", () => {
       .signers([dataSizeLimitAccount])
       .rpc();
     const dataSizeLimit = await program.account.dataSizeLimitAccount.fetch(
-      accountKey.publicKey
+      dataSizeLimitAccount.publicKey
     );
     expect(dataSizeLimit.varString).equal(data.repeat(interations));
   });
@@ -204,6 +200,10 @@ async function executeTx({
     tx = tx.prepend(
       ComputeBudgetProgram.requestHeapFrame({ bytes: exceedHeapFrame })
     )
+    // const ix = ComputeBudgetProgram.requestHeapFrame({ bytes: exceedHeapFrame })
+    // ix.data = Buffer.from(
+    //   Uint8Array.of(1, ...new BN(10 * 1024).toArray("le", 4))
+    // );
   }
 
   let txPending: PendingTransaction | undefined
@@ -217,10 +217,10 @@ async function executeTx({
       const txReceipt = await txPending.pollForReceipt()
       txReceipt.printLogs()
     } else {
-      console.debug(
-        'No txPending after execution failure (maybe in simulation mode?; ' +
-          'consider `(anchor.getProvider() as AnchorProvider).opts.skipPreflight = true`)'
-      )
+      // consider: (anchor.getProvider() as AnchorProvider).opts.skipPreflight = true)
+      // NOTE: error on Typescript side could be for example validation of Anchor IDL
+      console.debug("Transaction failed at client typescript side or in simulation mode. Instruction programs:")
+      tx.instructions.forEach((value, index) => console.debug(`[${index}]:${(value as TransactionInstruction).programId.toBase58()}`))
     }
     throw e
   }

@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-solana_runtime_limitations = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+solana_runtime_limitations = "6rtKQYnusfX9bXu4c5x26j6JkTefJmHExhpc5oEHCgj7"
 
 [registry]
 url = "https://api.apr.dev"
