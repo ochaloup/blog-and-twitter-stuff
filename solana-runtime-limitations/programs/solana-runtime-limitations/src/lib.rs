@@ -1,6 +1,7 @@
 mod instructions;
 
 use crate::instructions::data_size_limit::*;
+use crate::instructions::data_size_reallocate::*;
 use crate::instructions::data_size_supplier::*;
 use anchor_lang::prelude::*;
 
@@ -28,7 +29,23 @@ pub mod solana_runtime_limitations {
         ctx.accounts.process(addition)
     }
 
-    pub fn data_size_supplier_cpi(ctx: Context<DataSizeSupplierCpi>) -> Result<()> {
+    pub fn data_size_supplier_setup(ctx: Context<DataSizeSupplierSetup>) -> Result<()> {
+        ctx.accounts.process()
+    }
+
+    // -- data_size_reallocate
+    pub fn data_size_reallocate_init(ctx: Context<DataSizeReallocateInit>) -> Result<()> {
+        ctx.accounts.process()
+    }
+
+    pub fn data_size_reallocate_add(
+        ctx: Context<DataSizeReallocateAdd>,
+        addition: String,
+    ) -> Result<()> {
+        ctx.accounts.process(addition)
+    }
+
+    pub fn data_size_reallocate_setup(ctx: Context<DataSizeReallocateSetup>) -> Result<()> {
         ctx.accounts.process()
     }
 }
