@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 
-
 #[derive(Accounts)]
 pub struct MemoryDealocationOp {}
 
@@ -13,7 +12,11 @@ impl MemoryDealocationOp {
             temp = data.clone();
             let char = temp.as_str().chars().nth(index).unwrap();
             store = char;
-            index = if index + 1 == temp.len() { 0 } else { index + 1 };
+            index = if index + 1 == temp.len() {
+                0
+            } else {
+                index + 1
+            };
         }
         msg!("store: {}", store);
         Ok(())

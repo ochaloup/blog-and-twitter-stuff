@@ -1,9 +1,9 @@
 mod instructions;
 
+use crate::instructions::cu_limit::*;
 use crate::instructions::data_size_limit::*;
 use crate::instructions::data_size_reallocate::*;
 use crate::instructions::data_size_supplier::*;
-use crate::instructions::cu_limit::*;
 use crate::instructions::memory_deallocation::*;
 use anchor_lang::prelude::*;
 
@@ -57,7 +57,11 @@ pub mod solana_runtime_limitations {
     }
 
     // -- cu units
-    pub fn memory_deallocation(ctx: Context<MemoryDealocationOp>, data: String, iterations: u32) -> Result<()> {
+    pub fn memory_deallocation(
+        ctx: Context<MemoryDealocationOp>,
+        data: String,
+        iterations: u32,
+    ) -> Result<()> {
         ctx.accounts.process(data, iterations)
     }
 }
