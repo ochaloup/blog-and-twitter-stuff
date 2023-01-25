@@ -43,7 +43,7 @@ describe("solana-runtime-limitations", () => {
     const accountKey = Keypair.generate();
     // Maximal transaction size is 1232 this is maximal lenght of string to fit
     const data = "a".repeat(917);
-    console.log("data len", data.length);
+    // console.log("data len", data.length);
     const tx = await program.methods
       .dataSizeLimit({
         data,
@@ -136,7 +136,6 @@ describe("solana-runtime-limitations", () => {
     const data = "a".repeat(918);
     const interations = 11;
     for (let i = 1; i <= interations; i++) {
-      console.log("iiiiiiiiiiii", i);
       if (i < 12) {
         const tx = await program.methods
           .dataSizeReallocateAdd(data)
@@ -192,7 +191,7 @@ describe("solana-runtime-limitations", () => {
     console.log("Tx", tx, "consumed CU", txData.meta.computeUnitsConsumed);
   });
 
-  it.only("memory deallocation", async () => {
+  it("memory deallocation", async () => {
     const strData =
       "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz".repeat(3);
     let ix = await program.methods
