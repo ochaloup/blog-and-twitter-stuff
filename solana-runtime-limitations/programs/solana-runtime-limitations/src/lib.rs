@@ -3,6 +3,8 @@ mod instructions;
 use crate::instructions::data_size_limit::*;
 use crate::instructions::data_size_reallocate::*;
 use crate::instructions::data_size_supplier::*;
+use crate::instructions::cu_limit::*;
+use crate::instructions::memory_deallocation::*;
 use anchor_lang::prelude::*;
 
 declare_id!("6rtKQYnusfX9bXu4c5x26j6JkTefJmHExhpc5oEHCgj7");
@@ -47,5 +49,15 @@ pub mod solana_runtime_limitations {
 
     pub fn data_size_reallocate_setup(ctx: Context<DataSizeReallocateSetup>) -> Result<()> {
         ctx.accounts.process()
+    }
+
+    // -- cu units
+    pub fn cu_limit_init(ctx: Context<CuLimitOp>, iteration: u64) -> Result<()> {
+        ctx.accounts.process(iteration)
+    }
+
+    // -- cu units
+    pub fn memory_deallocation(ctx: Context<MemoryDealocationOp>, data: String, iterations: u32) -> Result<()> {
+        ctx.accounts.process(data, iterations)
     }
 }

@@ -1,4 +1,5 @@
 {
+    "license": "MIT",
     "scripts": {
         "build": "anchor build",
         "test": "anchor test",
