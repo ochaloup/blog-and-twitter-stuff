@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, Provider, Program } from "@project-serum/anchor";
 import { SolanaTypescriptApi } from "../target/types/solana_typescript_api";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 
 import {
   BlockhashWithExpiryBlockHeight,
@@ -158,6 +158,9 @@ describe("solana-typescript-api", () => {
       .initialize()
       .instruction();
 
+    expect(anchorWalletPayer.publicKey.equals(anchor.getProvider().publicKey))
+    expect(anchorWalletPayer.publicKey.equals((anchor.getProvider() as AnchorProvider).wallet.publicKey))
+
     // https://www.quicknode.com/guides/solana-development/how-to-use-versioned-transactions-on-solana
     const messageV0 = new TransactionMessage({
       payerKey: anchorWalletPayer.publicKey,
@@ -182,6 +185,8 @@ describe("solana-typescript-api", () => {
       "log",
       simulatedResponse.value.logs
     );
+    // TODO: what the simluate do in logs
+    // console.log((await tx.simulate()).value.logs)
   });
 
   it("simulate program with saberhq library", async () => {
