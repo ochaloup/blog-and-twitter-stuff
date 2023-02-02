@@ -1,6 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
-import { SolanaProvider, TransactionEnvelope } from "@saberhq/solana-contrib";
+import { SignerWallet, SolanaProvider, TransactionEnvelope, TransactionReceipt } from "@saberhq/solana-contrib";
 import { SolanaTxCost } from "../target/types/solana_tx_cost";
 import axios from "axios"
 import {
@@ -59,6 +59,16 @@ describe("solana-tx-cost", () => {
     )
     console.log("anxios ret", address.toBase58(), ret.data.result.value)
     return new BN(num.toString());
+  }
+
+  async function transfer(address: PublicKey, lamports: number): Promise<TransactionReceipt> {
+    const ix = SystemProgram.transfer({
+      fromPubkey: solanaProvider.wallet.publicKey,
+      toPubkey: address,
+      lamports: lamports,
+    });
+    const tx = new TransactionEnvelope(solanaProvider, [ix], []);
+    return await tx.confirm()
   }
 
   it("call simple", async () => {
@@ -163,6 +173,53 @@ describe("solana-tx-cost", () => {
       .sub(afterLamports);
     console.log(
       "TRANSFER BARE:",
+      "Signature",
+      txSignature.signature,
+      "receipt fee",
+      txSignature.response.meta.fee,
+      "before",
+      lamportsBefore.toString(),
+      "rentExceptionLamports",
+      rentExceptionLamports.toString(),
+      "after",
+      afterLamports.toString(),
+      "calculation",
+      feeCalculated.toString()
+    );
+    expect(feeCalculated.toNumber()).eq(txSignature.response.meta.fee);
+  });
+
+  it.only("transfer bare from smaller amount", async () => {
+    const account = Keypair.generate();
+    await transfer(account.publicKey, LAMPORTS_PER_SOL * 10)
+
+    const lamportsBefore = await getLamports(account.publicKey);
+    const rentExceptionLamports = new BN(
+      await solanaProvider.connection.getMinimumBalanceForRentExemption(0)
+    );
+
+    const somePubkey = PublicKey.unique();
+    const ix = SystemProgram.transfer({
+      fromPubkey: account.publicKey,
+      toPubkey: somePubkey,
+      lamports: rentExceptionLamports.toNumber(),
+    });
+    const newSolanaProvider = SolanaProvider.init({
+      connection: solanaProvider.connection,
+      wallet: new SignerWallet(account),
+      opts: solanaProvider.opts,
+    });
+    const tx = new TransactionEnvelope(newSolanaProvider, [ix], []);
+    const txSignature = await tx.confirm()
+
+    const afterLamports = await getLamports(account.publicKey);
+    const somePubkeyLamports = await getLamports(somePubkey)
+    expect(somePubkeyLamports.toNumber()).eq(rentExceptionLamports.toNumber())
+    const feeCalculated = lamportsBefore
+      .sub(rentExceptionLamports)
+      .sub(afterLamports);
+    console.log(
+      "TRANSFER BARE FROM SMALLER AMOUNT:",
       "Signature",
       txSignature.signature,
       "receipt fee",
