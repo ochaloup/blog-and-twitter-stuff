@@ -2,6 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { SolanaProvider, TransactionEnvelope } from "@saberhq/solana-contrib";
 import { SolanaTxCost } from "../target/types/solana_tx_cost";
+import axios from "axios"
 import {
   SystemProgram,
   PublicKey,
@@ -29,13 +30,34 @@ describe("solana-tx-cost", () => {
   const DEFAULT_NUMBER_OF_COMPUTE_UNITS_PER_TX = 200_000;
   const DEFAULT_SIGNATURE_FEE = 5000
 
-  async function getLamports(): Promise<BN> {
+  async function getLamports(address?: PublicKey): Promise<BN> {
+    address = address || solanaProvider.wallet.publicKey;
     const num = await solanaProvider.connection.getBalance(
-      solanaProvider.wallet.publicKey
+      address
     );
     // const aiLamports = (
     //   await solanaProvider.connection.getAccountInfo(solanaProvider.wallet.publicKey)
     // ).lamports
+    // Number.MAX_SAFE_INTEGER
+    // const recentBlockhash = await solanaProvider.connection.getLatestBlockhash();
+    const ret = await axios.post(solanaProvider.connection.rpcEndpoint,
+      {
+        jsonrpc: "2.0",
+        id:1,
+        method:"getBalance",
+        // minContextSlot: recentBlockhash.lastValidBlockHeight, // TODO: probably this way
+        params:[
+          address.toBase58(),
+          {
+            commitment: "processed",
+          }
+        ]
+      },
+      {
+        headers: {'Content-Type': 'application/json'},
+      }
+    )
+    console.log("anxios ret", address.toBase58(), ret.data.result.value)
     return new BN(num.toString());
   }
 
@@ -66,7 +88,7 @@ describe("solana-tx-cost", () => {
     expect(feeCalculated.toNumber()).eq(DEFAULT_SIGNATURE_FEE);
   });
 
-  it.only("call with siganture", async () => {
+  it("call with siganture", async () => {
     const lamportsBefore = await getLamports();
 
     // transaction is automatically signed by the wallet + one more signature
@@ -97,7 +119,7 @@ describe("solana-tx-cost", () => {
     expect(tx.signers.length).eq(1); // wallet is not mentioned, it's added automatically on send/confirm()
   });
 
-  it("transfer bare", async () => {
+  it.only("transfer bare", async () => {
     const lamportsBefore = await getLamports();
 
     // https://docs.rs/solana-program/latest/src/solana_program/rent.rs.html#31
@@ -129,9 +151,12 @@ describe("solana-tx-cost", () => {
 
     // https://github.com/solana-labs/solana/blob/v1.14.13/program-runtime/src/prioritization_fee.rs#L17
     // https://github.com/solana-labs/solana/blob/v1.14.13/program-runtime/src/compute_budget.rs#L13
-    // default CU (compute unit limit) is 200_000, default fee for CU is
+    // default CU (compute unit limit) is 200_000, default fee for CU is none (it seems)
+    // some info (not much) on blogpost https://www.quicknode.com/guides/solana-development/how-to-use-priority-fees-on-solana
 
     const afterLamports = await getLamports();
+    const somePubkeyLamports = await getLamports(somePubkey)
+    expect(somePubkeyLamports.toNumber()).eq(rentExceptionLamports.toNumber())
     const feeCalculated = lamportsBefore
       .sub(rentExceptionLamports)
       .sub(afterLamports);
@@ -199,7 +224,7 @@ describe("solana-tx-cost", () => {
     expect(feeCalculated.toNumber()).eq(DEFAULT_SIGNATURE_FEE * 2);
   });
 
-  it.only("call with signature set compute units", async () => {
+  it("call with signature set compute units", async () => {
     const lamportsBefore = await getLamports();
 
     const computeUnitsSet = 1000;
@@ -238,7 +263,7 @@ describe("solana-tx-cost", () => {
     );
   });
 
-  it.only("transfer set units and priority fee", async () => {
+  it("transfer set units and priority fee", async () => {
     const lamportsBefore = await getLamports();
     const transferAmount = new BN(LAMPORTS_PER_SOL.toString());
 
