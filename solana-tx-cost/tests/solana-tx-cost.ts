@@ -46,9 +46,6 @@ describe("solana-tx-cost", () => {
     const ix = await program.methods.simple().instruction();
     const tx = new TransactionEnvelope(solanaProvider, [ix], []);
     const txSignature = await tx.confirm();
-    console.log(
-
-    );
 
     const afterLamports = await getLamports();
     const feeCalculated = lamportsBefore.sub(afterLamports)
@@ -79,9 +76,6 @@ describe("solana-tx-cost", () => {
     }).instruction();
     const tx = new TransactionEnvelope(solanaProvider, [ix], [additionalSignature]);
     const txSignature = await tx.confirm();
-    console.log(
-
-    );
 
     const afterLamports = await getLamports();
     const feeCalculated = lamportsBefore.sub(afterLamports)
@@ -100,6 +94,7 @@ describe("solana-tx-cost", () => {
     );
     expect(feeCalculated.toNumber()).eq(txSignature.response.meta.fee);
     expect(feeCalculated.toNumber()).eq(DEFAULT_SIGNATURE_FEE * 2);
+    expect(tx.signers.length).eq(1); // wallet is not mentioned, it's added automatically on send/confirm()
   });
 
   it("transfer bare", async () => {
@@ -201,20 +196,62 @@ describe("solana-tx-cost", () => {
     expect(feeCalculated.toNumber() - DEFAULT_SIGNATURE_FEE).eq(
       DEFAULT_NUMBER_OF_COMPUTE_UNITS_PER_TX // we set 1 LAMPORT per CU
     );
+    expect(feeCalculated.toNumber()).eq(DEFAULT_SIGNATURE_FEE * 2);
   });
 
-  it("transfer set units and fee", async () => {
+  it.only("call with signature set compute units", async () => {
+    const lamportsBefore = await getLamports();
+
+    const computeUnitsSet = 1000;
+    const setUnitsIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: computeUnitsSet,
+    });
+    const additionalSignature = Keypair.generate();
+    const ix = await program.methods.withSignature().accounts({
+      signer: additionalSignature.publicKey,
+    }).instruction();
+    const tx = new TransactionEnvelope(
+      solanaProvider,
+      [setUnitsIx, ix],
+      [additionalSignature]
+    );
+    const txSignature = await tx.confirm();
+
+    const afterLamports = await getLamports();
+    const feeCalculated = lamportsBefore.sub(afterLamports);
+    console.log(
+      "CALL WITH SIGNATURE SET COMPUTE UNITS:",
+      "Signature",
+      txSignature.signature,
+      "receipt fee",
+      txSignature.response.meta.fee,
+      "before",
+      lamportsBefore.toString(),
+      "after",
+      afterLamports.toString(),
+      "calculation",
+      feeCalculated.toString()
+    );
+
+    expect(feeCalculated.toNumber()).eq(
+      txSignature.response.meta.fee
+    );
+  });
+
+  it.only("transfer set units and priority fee", async () => {
     const lamportsBefore = await getLamports();
     const transferAmount = new BN(LAMPORTS_PER_SOL.toString());
 
     const somePubkey = PublicKey.unique();
-    const computeUnitsSet = 1;
+    const computeUnitsSet = 0; // TODO: it's maybe a bug
     const microLamportsPerComputeUnit = 500_000; // 0.5 of LAMPORT per CU
-    const unitsIx = ComputeBudgetProgram.setComputeUnitLimit({
+    const setUnitsIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: computeUnitsSet,
     });
+    // what priority the transaction has is calculated within solana code
+    // refer to this issue on some details https://github.com/solana-labs/solana/issues/25604
     const priceIx = ComputeBudgetProgram.setComputeUnitPrice({
-      microLamports: 1_000_000,
+      microLamports: microLamportsPerComputeUnit,
     });
     const transferIx = SystemProgram.transfer({
       fromPubkey: solanaProvider.wallet.publicKey,
@@ -223,7 +260,7 @@ describe("solana-tx-cost", () => {
     });
     const tx = new TransactionEnvelope(
       solanaProvider,
-      [unitsIx, priceIx, transferIx],
+      [setUnitsIx, priceIx, transferIx],
       []
     );
     const txSignature = await tx.confirm();
@@ -231,7 +268,7 @@ describe("solana-tx-cost", () => {
     const afterLamports = await getLamports();
     const feeCalculated = lamportsBefore.sub(transferAmount).sub(afterLamports);
     console.log(
-      "TRANSFER SET UNITS and FEE: before",
+      "TRANSFER SET UNITS and PRIORITY FEE:",
       "Signature",
       txSignature.signature,
       "receipt fee",
