@@ -73,6 +73,7 @@ term naturarly quite promply. From code perspective the governance consists of s
 with definitions for voting. On top of it the governance defines
 [a DAO wallet containing native SOL](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/native_treasury.rs)
 (as any other walled account owned by System program, as PDA seeded by governance account addres).
+The program names the DAO Wallet with term `native treasury`.
 Any transaction executed on behalf of particular realm belongs under a governance which may use the DAO wallet
 as fee payer.
 
@@ -93,36 +94,45 @@ what is voting power of a particular voter (normally relates to number of tokens
 ## SPL Governance account structure
 
 The Governance account structure is documented
-[in the respository](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance#program-accounts)
+[in the respository](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance#program-accounts).
+But let's have a look at the account hierarchy in more details. We will start with the picture all available accounts and then
+having a description of them. 
 
-// **TODO:** add image here?
+![Image](./realm-info.png "Realm data structures")
 
-Let's deep dive into the code level of the account hierarchy.
 
 The top level account (representing a DAO as explained above) is
-[a `Realm` account](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L124).
+[the `Realm` account](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L124).
+The realm is defided by its name (there cannot be two realms with the same name for deployment of one governance program).
 The realm defines two groups of voting population - `council` and `community`.
-Members of the group may create a proposal (with or withouth instructions to be executed on sucesfful voting) and only members of that group
-may vote for the proposal.
+Each voting population is defined by its `mint` while the field of `community_mint` can be defined only at time of creation and cannot be changed
+(adding different mints to the community is possible either by creating a new realm or with applying a `voter weight plugin` like
+[Voter Stake Registry (VSR)](https://github.com/blockworks-foundation/voter-stake-registry) one).
+Members of the group may create a proposal (with or withouth instructions to be executed on sucesfful voting). Only members of the group
+that created the proposal may vote for it (i.e., the proposal is created by the council and only council members may vote for it), while the
+other group (members of the community) may veto the proposal.
+In addition, the realm configuration defines rules when a new governance can be created.
+
+The configuration of realm is held in the
+[`RealmConfig`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80) account.
+The realm config defines what type of token (liquid, membership, dormant/disabled) is used for particular group of voters.
+And here is where it's possible to define a custom plugin for voter weight calculation (e.g., VSR plugin).
+
+The realm groups few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80).
+Governance is the basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
+voting time elapses (`vote tipping`), if vetoing proposals is permitted and as last but not least
+it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
+
+The last part of the account structure hiearchy is the
+[`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105) itself.
+The proposal is created within one particular the governance.
+Proposal is created with a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
+The proposal consists of several options (determined by a string label) to vote for and optionally transactions that are executed.
+The proposal can be in [several states](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L101)
+that define operations that are permitted on the proposal (cancelling, voting, executing transactions, etc.).
+When voting on a proposal finishes it has got a vote result state and considers transactions to be executed on its behalf.
 
 
-https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/realm.rs#L35[configures]
-some fundamentals for the DAO voting.
-That's the community token covering the DAO, which DAO considers a council to exist and vote or it's whole run as community voting,
-it defines who can create a new governance account and it defines how the
-https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/realm_config.rs#L24[type of token is counted].
-Realm consists few or more `Governance` accounts (
-https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/governance.rs#L64[`GovernanceV2`]
-data structure)
-The Governance is a structural bundle that keeps configuration for the proposals created under it.
-The https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/governance.rs#L25[governance configuration] defines for example, who can create a new proposal, if the proposals will be voted by council, community or both,
-what is max time for voting on the proposal,
-how https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/enums.rs#L145[the votes are resolved] at the end of voting and other you can check in code.
-Then we have the Proposal (data struct
-https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/proposal.rs#L108[`ProposalV2`]
-) that the community (or/and council) votes on.
-The created Proposal consists of several options to vote for and optionally transactions that are executed when the particular proposal
-option passed sucessfully with voting.
-The Proposal itself then track the time of active voting is permitted to run, what is weight of tokens involved in voting,
-if veto voting is enabled, how options are considered https://github.com/solana-labs/solana-program-library/blob/da05275176f69bd158fccefed0076ddc5a7973ee/governance/program/src/state/proposal.rs#L57[as types] and similar.
-Every option that's under Proposal is identified by a label, has got a vote result state and considers transactions to be executed on its behalf.
+## How the voting works
+
+- token owner record
