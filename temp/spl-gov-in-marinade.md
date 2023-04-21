@@ -43,6 +43,10 @@ which means adding the address to UI configuration file with [creating a PR](htt
 To integrate the SPL Governance to your own application you can use the Typescript SDK under Oyster
 repository https://github.com/solana-labs/oyster/tree/main/packages/governance-sdk
 
+**NOTE:** And if you are looking for even more detailed technical description of the SPL Governance system
+check the article from sec3
+[Solana DAO Governance (Part 1): understanding SPL Governance Workflow](https://medium.com/coinmonks/solana-dao-governance-part-1-understanding-spl-governance-3ccf6d6912bc).
+
 ## Terms and glossary
 
 The terms used within the SPL Governance system are a bit ambiguous at some places,
@@ -98,6 +102,7 @@ The Governance account structure is documented
 But let's have a look at the account hierarchy in more details. We will start with the picture all available accounts and then
 having a description of them. 
 
+<!-- TODO: simplify the data structure, remove VSR, remove lifecycle -->
 ![Image](./realm-info.png "Realm data structures")
 
 
@@ -118,21 +123,53 @@ The configuration of realm is held in the
 The realm config defines what type of token (liquid, membership, dormant/disabled) is used for particular group of voters.
 And here is where it's possible to define a custom plugin for voter weight calculation (e.g., VSR plugin).
 
-The realm groups few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80).
-Governance is the basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
+The realm groups few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80) instances.
+Governance is a basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
 voting time elapses (`vote tipping`), if vetoing proposals is permitted and as last but not least
 it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
 
 The last part of the account structure hiearchy is the
 [`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105) itself.
-The proposal is created within one particular the governance.
-Proposal is created with a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
-The proposal consists of several options (determined by a string label) to vote for and optionally transactions that are executed.
-The proposal can be in [several states](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L101)
-that define operations that are permitted on the proposal (cancelling, voting, executing transactions, etc.).
-When voting on a proposal finishes it has got a vote result state and considers transactions to be executed on its behalf.
+The proposal is created within one particular governance.
+Proposal is bounded to a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
+The proposal consists of several options (determined by a string label) that the voting population chooses from. There is optionally defined
+instructions for particular options that are executed on when the option succesful passed.
+After creation the proposal goes through lifecycle defined by [several states](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L101). The lifecycle state designates permitted operations
+over the proposal - only at certaom state the proposal can be cancelled, voted for, transaction execution can be run etc.
+
+## Lifecycle of a proposal
+
+<!-- TODO: place only lifecycle from this picture -->
+![Image](./realm-info.png "Realm data structures")
+
+As said before the proposal goes through lifecycle defined by several states. Let's have a look at them in more details.
+
+### Draft
+
+When the proposal is created it's in the `Draft` state. The proposal is created with set of options (each of them is determined by a string label
+and an index in array where it's stored). The proposal stays in `Draft` state until it's signed-off.
+When in `Draft` state the creator of the proposal may add multiple signatories to the proposal with
+[`AddSignatory` instruction](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L162).
+The proposal moves to `Voting` state only when all signatories are placed in. That way one may ensure that the proposal won't leave the `Draft` state
+(i.e., it's not ready to take votes) until yet another signatory signs. When that should be ensured it's good to place the`AddSignatory` instructions
+within the same transaction as where the `CreateProposal` is.
+When a first signer signs, the proposal enters the `SigningOff` state, it leaves when last signatory signs.
+Until the proposal is in `Voting` state one can call `InsertTransaction` instruction to bound instructions to an option of the proposal.
+The option is defined by an index within the array structure and that index is passed to `InsertTransaction` instruction. The call may be repeated for the same option.
+
+**NOTE:** on creating a proposal there is deposited
+[a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L354)
+to custody of the Governance system. The amount increases based on the currently active proposals.
+The deposited amount
+[can be refunded](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_refund_proposal_deposit.rs)
+when the voting on proposal is finished.
+The reason for that is to prevent spamming the system with proposals that are not going to be voted on.
+It's the benefit of UI that such maintanance operations are handled automatically.
 
 
-## How the voting works
+
+## Locking tokens a voting
 
 - token owner record
+
+## Plugin system
