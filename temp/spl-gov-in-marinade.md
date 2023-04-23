@@ -166,6 +166,71 @@ when the voting on proposal is finished.
 The reason for that is to prevent spamming the system with proposals that are not going to be voted on.
 It's the benefit of UI that such maintanance operations are handled automatically.
 
+### Voting
+
+When all transactions are in place and every signatory was acknowledged by call of
+[`SignOffProposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L168)
+instruction then with the last signature the proposal is moved to `Voting` state.
+In this state the proposal is ready to take votes.
+Voting population of `council` or `community` may vote on the proposal. They can vote for the proposal or cast `deny` votes against the proposal.
+The voting is done by calling
+[`CastVote` instruction](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L171).
+The second voting population may cast votes to veto the proposal.
+Voting time is defined by
+[`voting_base_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L43)
+governance attribute and can be prolonged by setting-up
+[`voting_cool_off_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L65)
+when only negative votes (`deny` and `vetoes`) are accepted.
+The voting may be finished before the voting time elapses when
+[`vote tipping`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L45) is enabled.
+
+The voter may change his mind and cast another vote. That has to be done by first calling the
+[`RelinquishVote`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L175)
+that removes the voting power from the option and then new vote can be casted.
+
+When the voting time elapses and the proposal was not tipped, to be finished sooner, one needs to call 
+[`FinalizeVote`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L173)
+instruction for the proposal being moved to `Succeeded` or `Defeated` state.
+The `Defeated` state is a final one.
+It depends ons thresholds configured in governance.
+The `FinalizeVote` instruction checks the number of `Yes` votes and number of `deny` votes at all options of the proposal, considers the
+[type of the proposal](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L144)  and then decides.
+
+The workflow for `Veto` votes is a bit different. The proposal is moved to final `Vetoed` state when veto threshold is met.
+This is checked at every `CastVote` call regardless the `vote tipping` is enabled or not.
+
+During the time the proposal is in the draft state or under voting the proposal may be cancelled.
+Then the proposal is moved to a final `Cancelled` state.
+Only the owner of the proposal is permitted to call the instruction [`CancelProposal](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L177).
+The owner is here token owner record (see below) that is set whithin the proposal account on its creation.
+
+NOTE: At the time when the proposal was moved to a final state it's good to remind to
+[refund the deposit](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L227).
+
+### Finalization
+
+When the proposal ends in `Succeeded` state the instructions bound to the option of the proposal may be executed.
+It's not only the proposal that is marked with the state. On finalization each option is marked with the state as well.
+As the proposal may consist of several options, each of them may be in different state. Only those options that were labeled as
+[`Succeeded`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L41)
+may executed attached instructions with the call of
+[`ExecuteTransaction`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L196).
+
+The governance may configure
+[min_transaction_hold_up_time](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L37)
+which adds the time when the instruction can be started to be executed.
+Only after that number of seconds elapsed after the proposal was finalized the instruction may be executed.
+
+As the all instructions are executed the proposal is moved to final
+[`Completed`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) state.
+
+There is one more eventuallity where the instructions from the proposal fail to be executed.
+That's mostly caused by fact the instruction was wrongly composed (e.g., passed wrong accounts)
+or the state of the blockchain changed since the proposal was created and the constraints for the instruction executions
+cannot be met anymore.
+In that case the proposal may be marked as
+[`ExecutingWithErrors`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121).
+
 
 
 ## Locking tokens a voting
