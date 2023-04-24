@@ -224,47 +224,21 @@ or the state of the blockchain changed since the proposal was created and the co
 In that case the proposal may be marked as [`ExecutingWithErrors`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) by calling appropriate instruction (anyone with permission to execute instructions can do that).
 
 
-## Voting and locking tokes
+## Voting and Locking Tokens
 
-We discussed the data strctures and the workflow of the SPL Governance while haven't touched the topic of the voting. Who can vote on proposals
-and how the voting power is calculated?
+We have discussed the data structures and workflow of the SPL Governance but have not yet touched on the topic of voting. Who can vote on proposals and how is the voting power calculated?
 
-The voter is an owner of the tokens. The `realm` is created with definition of the `community` and `council` mints. The ownership of the token
-give the right to vote on the proposals. The voting power is calculated as the ration of locked(**!**) number of tokens owned by the voter
-and the max voter weght of tokens for the mint.
-The max voter weight could be considered as the total supply of tokens for the mint.
-That's strictly true for `council` token. For community tokens one can configure `realm` attribute 
-[community_mint_max_voter_weight_source](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L43)
-where beside the total supply of tokens
-[the max voter weight](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L519)
-could be defined as an absolute number or for taking only a fraction of the total supply.
+The voter must be an owner of the tokens. A `realm` is created with the definition of the `community` and `council` mints. Ownership of the token gives the right to vote on proposals. Voting power is calculated as the ratio of the locked number of tokens owned by the voter and the maximum voter weight of tokens for the mint. The maximum voter weight could be considered as the total supply of tokens for the mint. That's strictly true for `council` token. For community tokens one can configure `realm` attribute [community_mint_max_voter_weight_source](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L43) where beside the total supply of tokens [the max voter weight](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L519) could be defined as an absolute number or for taking only a fraction of the total supply.
 
-Beside that the `realm` configures
-[how the token is considered](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L21).
-If the token type is `membership` then the token is controlled by the `realm`. The token cannot be transferred to another wallet.
-When the token type is `liquid` then the token can be freely transferred. The mint authority can be defined under the `realm` or
-to any other wallet. The `dormant` token type says that part of voting population is disabled in the `realm`.
+Beside that the `realm` configures [how the token is considered](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L21). If the token type is `membership` then the token is controlled by the `realm`. The token cannot be transferred to another wallet. When the token type is `liquid` then the token can be freely transferred. The mint authority can be defined under the `realm` or to any other wallet. The `dormant` token type says that part of voting population is disabled in the `realm`.
 
-For the voter could employ its voting power she has to lock the tokens to the `realm`.
-It's done by
-[deposit call](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_deposit_governing_tokens.rs).
-The tokens can be withrawn when all active proposal where the voter voted at are finished
-or when all votes are relinquished by voter.
+For the voter to employ their voting power, they must lock the tokens to the `realm`. This is done by a [deposit call](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_deposit_governing_tokens.rs). The tokens can be withdrawn when all active proposals where the voter voted are finished or when all votes are relinquished by the voter.
 
-The SPL Governance creates an account
-[`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33)
-for each voter (more precisely for every wallet).
-It's an account keeping record of how many tokens were locked (giving the voting power) and what is the number of active proposals
-the voter voted for (to determine whether the withdrawal is possible).
+The SPL Governance creates an account [`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33) for each voter (more precisely, for every wallet). It keeps a record of how many tokens were locked (giving the voting power) and what the number of active proposals the voter voted for is (to determine whether the withdrawal is possible).
 
 
-## Plugin system
+## Plugin System
 
-The SPL Governance program is designed to be extensible. In version 3.1 there are available two extension points of
-[`voter weight` and `max voter weight`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/addin-api/README.md)
-addins.
+The SPL Governance program is designed to be extensible. In version 3.1, there are two available extension points: [`voter weight` and `max voter weight`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/addin-api/README.md) addins.
 
-The configuration of the realm defines that there is an addin to be used for any calculation of
-[the voting power (voter weight) and max voter weight](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_configrs#L64).
-That way the voting power could not depend only on the number of locked tokens of the mint
-but anything can be used for the calculation.
+The configuration of the realm defines that there is an addin to be used for any calculation of [the voting power (voter weight) and max voter weight](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_configrs#L64). This way, the voting power cannot depend solely on the number of locked tokens of the
