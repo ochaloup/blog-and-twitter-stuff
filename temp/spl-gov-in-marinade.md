@@ -1,49 +1,39 @@
 # Solana Program Library Governance
 
-With Marinade migration from Tribeca governance system to Realms of SPL Govevernance
-we introduce a bit more technical article on this topic.
-It's meant for anybody interested to understand the Realms system in details
-and for anybody planning to integrate with SPL Gov.
+With the Marinade migration from the Tribeca governance system to the Realms of SPL Governance,
+we introduce a more technical article on this topic. It's meant for anybody interested in understanding
+the Realms system in detail and for anybody planning to integrate with SPL Gov.
 
-## SPL Goveranance
+## SPL Governance
 
-Let's talk from technical perspective here.
-The SPL Governance is [a Solana blockchain program](https://github.com/solana-labs/solana-program-library/tree/master/governance)
+Let's talk from a technical perspective here. The SPL Governance is [a Solana blockchain program](https://github.com/solana-labs/solana-program-library/tree/master/governance)
 developed as part of the [Solana Program Library](https://spl.solana.com/), meaning the program is developed by guys from Solana Labs.
-The program purpose is to provide a blockchain based tool to manage [Decentralized Autonomous Organization (DAO)](https://docs.marinade.finance/marinade-dao).
+The program's purpose is to provide a blockchain-based tool to manage [Decentralized Autonomous Organization (DAO)](https://docs.marinade.finance/marinade-dao).
 
-The SPL Governance is designed in generic manner to cover good amount of use cases for DAO management.
-The corner stone of functionality covers creating a proposals containing blockchain instructions
-that DAO members may vote upon and on succesful voting the instructions may be executed.
-A simplistic use case could be to use the SPL Gov system to create a multisig control
-over distribution of DAO funds.
-A heavier use runs smooth DAO management through created instructions that can be voted by community and/or council
-which consist minting tokens, transfering funds from DAO treasury, upgrading code of programs belonging to DAO
+The SPL Governance is designed in a generic manner to cover a good amount of use cases for DAO management.
+The cornerstone of functionality covers creating proposals containing blockchain instructions that DAO members may vote upon,
+and on successful voting, the instructions may be executed.
+A simplistic use case could be to use the SPL Gov system to create a multisig control over distribution of DAO funds.
+A heavier use runs smooth DAO management through created instructions that can be voted by the community and/or council,
+which consists of minting tokens, transferring funds from the DAO treasury, upgrading the code of programs belonging to the DAO,
 and being an admin authority of the managed programs.
 
 ## Where to find, how to get
 
-**IMPORTANT:** whole this article refers to SPL Governance in version 3.1
-[released in December 2022](https://github.com/solana-labs/solana-program-library/releases/tag/governance-v3.1.0). 
+**IMPORTANT:** This article refers to SPL Governance in version 3.1 [released in December 2022](https://github.com/solana-labs/solana-program-library/releases/tag/governance-v3.1.0).
 
-The [SPL Governance](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/README.md)
-program an be found as part of the Solana Program Library at https://github.com/solana-labs/solana-program-library/tree/governance-v3.1.0/governance
-It's deployed at `GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw` while
-[it's recommended](https://discord.com/channels/910194960941338677/945282322318655528/1079728429697597462) for DAO to do
-[own deployment](https://github.com/solana-labs/solana-program-library/tree/governance-v3.1.0/governance#1-dao-owned-instance)
-of the SPL Gov program.
+The [SPL Governance](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/README.md) program can be found as part of the Solana Program Library at https://github.com/solana-labs/solana-program-library/tree/governance-v3.1.0/governance.
+It's deployed at `GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw` while [it's recommended](https://discord.com/channels/910194960941338677/945282322318655528/1079728429697597462) for DAO to do [own deployment](https://github.com/solana-labs/solana-program-library/tree/governance-v3.1.0/governance#1-dao-owned-instance) of the SPL Gov program.
 
-SPL Governance provides an UI that is used for DAO management, it's available at https://app.realms.today/realms
-(to work on devnet add [`?cluster=devnet`](https://app.realms.today/realms?cluster=devnet)).
-The source code is at respository https://github.com/solana-labs/governance-ui
+SPL Governance provides a UI that is used for DAO management, which is available at https://app.realms.today/realms (to work on devnet, add [`?cluster=devnet`](https://app.realms.today/realms?cluster=devnet)).
+The source code is in the repository https://github.com/solana-labs/governance-ui.
 
-**NOTE:** for a self deployed program to work properly in UI it's good to add it to the list of known SPL Gov instances
-which means adding the address to UI configuration file with [creating a PR](https://github.com/solana-labs/governance-ui/pull/1534).
+**NOTE:** For a self-deployed program to work properly in UI, it's good to add it to the list of known SPL Gov instances,
+which means adding the address to the UI configuration file with [creating a PR](https://github.com/solana-labs/governance-ui/pull/1534).
 
-To integrate the SPL Governance to your own application you can use the Typescript SDK under Oyster
-repository https://github.com/solana-labs/oyster/tree/main/packages/governance-sdk
+To integrate the SPL Governance into your own application, you can use the Typescript SDK under the Oyster repository https://github.com/solana-labs/oyster/tree/main/packages/governance-sdk.
 
-**NOTE:** And if you are looking for even more detailed technical description of the SPL Governance system
+*NOTE:** And if you are looking for even more detailed technical description of the SPL Governance system
 check the article from sec3
 [Solana DAO Governance (Part 1): understanding SPL Governance Workflow](https://medium.com/coinmonks/solana-dao-governance-part-1-understanding-spl-governance-3ccf6d6912bc).
 
@@ -85,51 +75,51 @@ as fee payer.
 for any program that will be managed by the realm
 (i.e., program defines an authority or admin field in its account that has got permission to do configuration changes)
 
+
 ### Proposal
 
-It's a submision of a proposition representied a poll where voters places their pro or cons attitudes. When the poll sucessfuly passes
-the proposal is considered sucesful and if the submission contains a transaction it can be executed to seal
-the resolution of the voting.
+It's a submission of a proposition represented by a poll where voters place their pro or con attitudes. When the poll successfully passes,
+the proposal is considered successful and if the submission contains a transaction, it can be executed to seal the resolution of the voting.
 
-The voting parameters could be configured on when the proposal is considred succesful (e.g., what percentage of pro votes must be aquired),
-what is voting power of a particular voter (normally relates to number of tokens the voter holds) etc.
+The voting parameters could be configured on when the proposal is considered successful (e.g., what percentage of pro votes must be acquired),
+what is the voting power of a particular voter (normally relates to the number of tokens the voter holds), etc.
 
 
 ## SPL Governance account structure
 
 The Governance account structure is documented
-[in the respository](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance#program-accounts).
-But let's have a look at the account hierarchy in more details. We will start with the picture all available accounts and then
-having a description of them. 
+[in the repository](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance#program-accounts).
+But let's have a look at the account hierarchy in more detail. We will start with the picture of all available accounts and then
+have a description of them. 
 
 <!-- TODO: simplify the data structure, remove VSR, remove lifecycle -->
 ![Image](./realm-info.png "Realm data structures")
 
 
-The top level account (representing a DAO as explained above) is
+The top-level account (representing a DAO as explained above) is
 [the `Realm` account](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L124).
-The realm is defided by its name (there cannot be two realms with the same name for deployment of one governance program).
+The realm is divided by its name (there cannot be two realms with the same name for deployment of one governance program).
 The realm defines two groups of voting population - `council` and `community`.
-Each voting population is defined by its `mint` while the field of `community_mint` can be defined only at time of creation and cannot be changed
+Each voting population is defined by its `mint` while the field of `community_mint` can be defined only at the time of creation and cannot be changed
 (adding different mints to the community is possible either by creating a new realm or with applying a `voter weight plugin` like
 [Voter Stake Registry (VSR)](https://github.com/blockworks-foundation/voter-stake-registry) one).
-Members of the group may create a proposal (with or withouth instructions to be executed on sucesfful voting). Only members of the group
-that created the proposal may vote for it (i.e., the proposal is created by the council and only council members may vote for it), while the
+Members of the group may create a proposal (with or without instructions to be executed on successful voting). Only members of the group
+that created the proposal may vote for it (i.e., the proposal is created by the council, and only council members may vote for it), while the
 other group (members of the community) may veto the proposal.
 In addition, the realm configuration defines rules when a new governance can be created.
 
-The configuration of realm is held in the
+The configuration of the realm is held in the
 [`RealmConfig`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80) account.
-The realm config defines what type of token (liquid, membership, dormant/disabled) is used for particular group of voters.
+The realm config defines what type of token (liquid, membership, dormant/disabled) is used for a particular group of voters.
 And here is where it's possible to define a custom plugin for voter weight calculation (e.g., VSR plugin).
 
-The realm groups few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80) instances.
+The realm groups a few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80) instances.
 Governance is a basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
-voting time elapses (`vote tipping`), if vetoing proposals is permitted and as last but not least
+voting time elapses (`vote tipping`), if vetoing proposals is permitted, and as last but not least,
 it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
 
-The last part of the account structure hiearchy is the
-[`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105) itself.
+The last part of the account structure hierarchy is the
+[`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105
 The proposal is created within one particular governance.
 Proposal is bounded to a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
 The proposal consists of several options (determined by a string label) that the voting population chooses from. There is optionally defined
@@ -158,8 +148,8 @@ As said before the proposal goes through lifecycle defined by several states. Le
 
 ### Draft
 
-When the proposal is created it's in the `Draft` state. The proposal is created with set of options (each of them is determined by a string label
-and an index in array where it's stored). The proposal stays in `Draft` state until it's signed-off.
+When the proposal is created it's in the `Draft` state. The proposal is created with a set of options (each of them is determined by a string label
+and an index in the array where it's stored). The proposal stays in `Draft` state until it's signed-off.
 When in `Draft` state the creator of the proposal may add multiple signatories to the proposal with
 [`AddSignatory` instruction](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L162).
 The proposal moves to `Voting` state only when all signatories are placed in. That way one may ensure that the proposal won't leave the `Draft` state
@@ -169,8 +159,8 @@ When a first signer signs, the proposal enters the `SigningOff` state, it leaves
 Until the proposal is in `Voting` state one can call `InsertTransaction` instruction to bound instructions to an option of the proposal.
 The option is defined by an index within the array structure and that index is passed to `InsertTransaction` instruction. The call may be repeated for the same option.
 
-**NOTE:** on creating a proposal there is deposited
-[a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L354)
+**NOTE:** On creating a proposal, there is deposited
+[a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1#L354)
 to custody of the Governance system. The amount increases based on the currently active proposals.
 The deposited amount
 [can be refunded](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_refund_proposal_deposit.rs)
@@ -219,30 +209,19 @@ The owner is here token owner record (see below) that is set whithin the proposa
 NOTE: At the time when the proposal was moved to a final state it's good to remind to
 [refund the deposit](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L227).
 
+
 ### Finalization
 
-When the proposal ends in `Succeeded` state the instructions bound to the option of the proposal may be executed.
-It's not only the proposal that is marked with the state. On finalization each option is marked with the state as well.
-As the proposal may consist of several options, each of them may be in different state. Only those options that were labeled as
-[`Succeeded`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L41)
-may executed attached instructions with the call of
-[`ExecuteTransaction`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L196).
+When the proposal ends in the `Succeeded` state, the instructions bound to the proposal's option may be executed. It's not only the proposal that is marked with this state; on finalization, each option is marked with this state as well.
+As the proposal may consist of several options, each of them may be in different state. Only those options that were labeled as [`Succeeded`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L41) may execute attached instructions with the call of [`ExecuteTransaction`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L196).
 
-The governance may configure
-[min_transaction_hold_up_time](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L37)
-which adds the time when the instruction can be started to be executed.
-Only after that number of seconds elapsed after the proposal was finalized the instruction may be executed.
+The governance may configure [`min_transaction_hold_up_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L37), which adds the time when the instruction can be started to be executed. Only after that number of seconds elapsed after the proposal was finalized the instruction may be executed.
 
-As the all instructions are executed the proposal is moved to final
-[`Completed`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) state.
+As the all instructions are executed the proposal is moved to final [`Completed`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) state.
 
-There is one more eventuallity where the instructions from the proposal fail to be executed.
-That could be caused by wrongly composed instructions (e.g., wrong accounts passed to the instruction)
-or the state of the blockchain changed since the proposal was created and the constraints for the instruction executions
-cannot be met anymore.
-In that case the proposal may be marked as
-[`ExecutingWithErrors`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121)
-by calling appropriate instruction (anyone with permission to execute instructions can do that).
+There is one more eventuallity where the instructions from the proposal fail to be executed. That could be caused by wrongly composed instructions (e.g., wrong accounts passed to the instruction)
+or the state of the blockchain changed since the proposal was created and the constraints for the instruction executions cannot be met anymore.
+In that case the proposal may be marked as [`ExecutingWithErrors`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) by calling appropriate instruction (anyone with permission to execute instructions can do that).
 
 
 ## Voting and locking tokes
