@@ -133,7 +133,7 @@ voting time elapses (`vote tipping`), if vetoing proposals is permitted, and as 
 it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
 
 The last part of the account structure hierarchy is the
-[`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105
+[`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105)
 The proposal is created within one particular governance.
 Proposal is bounded to a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
 The proposal consists of several options (determined by a string label) that the voting population chooses from. There is optionally defined
@@ -176,7 +176,7 @@ Until the proposal is in `Voting` state one can call `InsertTransaction` instruc
 The option is defined by an index within the array structure and that index is passed to `InsertTransaction` instruction. The call may be repeated for the same option to place in multiple instructions.
 
 **NOTE:** On creating a proposal, there is deposited
-[a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1#L354)
+[a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_create_proposal.rs#L188)
 to custody of the Governance system. The amount increases based on the currently active proposals.
 The deposited amount
 [can be refunded](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_refund_proposal_deposit.rs)
@@ -216,7 +216,7 @@ This is checked at every `CastVote` call regardless the `vote tipping` is enable
 
 During the time the proposal is in the `Draft` state or under `Voting` the proposal may be cancelled.
 When it happens the proposal is moved to a final `Cancelled` state.
-Only the owner of the proposal is permitted to call the instruction [`CancelProposal](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L177).
+Only the owner of the proposal is permitted to call the instruction [`CancelProposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L177).
 The term owner means a token owner record account (see below) that was inserted into the proposal account on its creation.
 
 ### Finalization
@@ -277,7 +277,7 @@ The SPL Governance program is designed to be extensible. In version 3.1, there a
 addins.
 
 The configuration of the realm defines that there is an addin to be used for any calculation of
-[the voting power (voter weight) and max voter weight](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_configrs#L64).
+[the voting power (voter weight) and max voter weight](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L64).
 This way, the voting power cannot depend solely on the number of locked tokens of the mint
 but mostly anything can be used for the calculation.
 
