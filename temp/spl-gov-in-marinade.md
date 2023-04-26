@@ -53,7 +53,7 @@ so let's pin some of them to clarify their meaning and not missed you in the res
 
 The term `realm` is used at multiple places within the texts and documentation
 of the SPL Gov system. At some perspective it can be considered as equivalent to DAO,
-in cases a DAO may consists of several `relms`. Let's elaborate.
+in cases a DAO may consists of several `realms`. Let's elaborate.
 
 From technical perspective the `Realm` is the top level wrapper of configuration setup for DAO.
 In this context the [`Realm`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs)
@@ -67,13 +67,14 @@ It's the reason why the `governance-ui` uses both terms interchangeably.
 
 ### Governance vs. DAO Wallet
 
-The term governance is ubiquituous. You can find it in the name of library, the purpose of the program is to
+The term governance is ubiquitous. You can find it in the name of library, the purpose of the program is to
 __govern__ the DAO. Thus eyes looking into repository will reach the
 [governance](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs)
-term naturarly quite promply. From code perspective it's a data structure that defines a content of Solana account.
+term naturally quite promptly. From code perspective it's a data structure that defines a content of Solana account.
 It's strictly bound to one realm (see above). The governance consists of set of configuration parameters
 for voting over proposals. On top, the governance determines strictly unique
-[DAO wallet containing native SOL](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/native_treasury.rs). It's a Solana account that holds native SOL tokens owned by `System program`, cretead as PDA seeded by governance account address.
+[DAO wallet containing native SOL](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/native_treasury.rs).
+It's a Solana account that holds native SOL tokens owned by `System program`, created as PDA seeded by governance account address.
 The SPL Governance program names the DAO Wallet with term `native treasury`.
 Any transaction executed on behalf of particular realm belongs under a governance
 which may use the DAO wallet as fee payer.
@@ -117,7 +118,7 @@ Each voting population configure its `mint` while the field of `community_mint` 
 (different community mints are available with creating a new realm or with applying plugin functionality like
 [Voter Stake Registry (VSR)](https://github.com/blockworks-foundation/voter-stake-registry).
 Members of the population may create a proposal (with or without instructions to be executed on successful voting). Only members of the group
-that created the proposal may vote for it (i.e., the proposal is created by the council, and only council members may vote for it), while the
+that created the proposal may vote for it (i.e., the proposal is created by the council, and only council members may vote for it), while
 the members of the other population (members of the community) may veto the proposal.
 In addition, the realm consists of other configuration parameters, it defines the rule when a new governance instance can be created.
 
@@ -136,7 +137,7 @@ The last part of the account structure hierarchy is the
 The proposal is created within one particular governance.
 Proposal is bounded to a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
 The proposal consists of several options (determined by a string label) that the voting population chooses from. There is optionally defined
-instructions for particular options that are executed on when the option succesful passed.
+instructions for particular options that are executed on when the option successful passed.
 After creation, the proposal goes through lifecycle defined by [several states](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L101). The lifecycle state designates permitted operations
 over the proposal - only at certain state the proposal can be cancelled, voted for, transaction execution can be run etc.
 
@@ -181,7 +182,7 @@ The deposited amount
 [can be refunded](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_refund_proposal_deposit.rs)
 when the voting on proposal is finished.
 The reason for that is to prevent spamming the system with proposals that are not going to be voted on.
-It's the benefit of UI that such maintanance operations are handled automatically.
+It's the benefit of UI that such maintenance operations are handled automatically.
 
 ### Voting
 
@@ -228,12 +229,16 @@ The governance may configure [`min_transaction_hold_up_time`](https://github.com
 
 When all instructions are executed the proposal is moved to final [`Completed`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) state.
 
-There is one more eventuallity where the instructions from the proposal fail to be executed. That could be caused by wrongly composed instructions
+There is one more eventuality where the instructions from the proposal fail to be executed. That could be caused by wrongly composed instructions
 (e.g., wrong accounts passed to the instruction) or the state of the blockchain changed since the proposal was created and the constraints
 for the instruction executions cannot be met anymore.
 In that case the proposal may be marked as
 [`ExecutingWithErrors`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121)
-by calling appropriate instruction (anyone with permission to execute instructions can do that).
+by calling appropriate instruction (called by the proposal creator).
+
+## Survey type proposals
+
+**TODO:** ... write about survey type proposals: https://github.com/solana-labs/solana-program-library/pull/3847
 
 
 ## Voting and Locking Tokens
@@ -260,7 +265,7 @@ by any other entity. The `dormant` token type says that part of voting populatio
 
 For the voter to employ their voting power, they must lock the tokens to the `realm`. This is done by
 a [deposit call](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_deposit_governing_tokens.rs). The tokens are locked until any active proposal where the voter voted exists.
-For the owner to withdrawn the funds he has to wait until voting period ends or when he relinquishes his votes.
+For the owner to withdraw the funds he has to wait until voting period ends or when he relinquishes his votes.
 
 The SPL Governance creates an account [`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33) for each voter (more precisely, for every wallet). It keeps a record of how many tokens were locked (giving the voting power) and what's the number of active proposals the voter voted for is (to determine whether the withdrawal is possible).
 
@@ -276,3 +281,6 @@ The configuration of the realm defines that there is an addin to be used for any
 This way, the voting power cannot depend solely on the number of locked tokens of the mint
 but mostly anything can be used for the calculation.
 
+## Governance UI
+
+**TODO:** write a bit about governance ui and how the terms used there match to code
