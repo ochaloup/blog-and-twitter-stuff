@@ -40,8 +40,14 @@ The source code of the UI is available at the repository https://github.com/sola
 To integrate the SPL Governance into your own application, you can use the Typescript SDK under the Oyster repository
 https://github.com/solana-labs/oyster/tree/main/packages/governance-sdk.
 
-**NOTE:** If you search for even more detailed technical description of the SPL Governance system
-check the article from sec3
+
+## Other resources
+
+A good complementary resource to this article could be the official 
+[README of the governance program](https://github.com/solana-labs/solana-program-library/blob/master/governance/README.md)
+at GitHub.
+
+Then a nice technical description of the SPL Governance system can be found at sec3 article
 [Solana DAO Governance (Part 1): understanding SPL Governance Workflow](https://medium.com/coinmonks/solana-dao-governance-part-1-understanding-spl-governance-3ccf6d6912bc).
 
 ## Terms and glossary
@@ -112,7 +118,12 @@ have a description of them.
 
 The top-level account (representing a DAO as explained above) is
 [the `Realm` account](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L124).
-The realm is identified by its name (there cannot be created two realms with the same name).
+The address of the realm account is
+[calculated as PDA address](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm.rs#L125)
+identified by its name. There cannot be created two realms with the same name, the name cannot be changed while a display name used
+for example in Governance UI
+[can be modified](https://discord.com/channels/910194960941338677/964818745786789898/1093478043382722580).
+
 The realm is defined by two groups of voting population - `council` and `community`.
 Each voting population configure its `mint` while the field of `community_mint` can be defined only at the time of creation and cannot be changed later
 (different community mints are available with creating a new realm or with applying plugin functionality like
@@ -165,15 +176,24 @@ As said before the proposal goes through lifecycle defined by several states. Le
 ### Draft
 
 A new proposal is created in `Draft` state. The proposal consists of set of options (each of them is determined by a string label
-and an index in the array where it's stored). The proposal stays in `Draft` state until it's signed-off.
+and an index in the array where it's stored).
 When in `Draft` state the creator of the proposal may add multiple signatories to the proposal with
 [`AddSignatory` instruction](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L162).
-The proposal moves to `Voting` state only when all signatories are placed in. That way one may ensure that the proposal won't leave the `Draft` state
-(i.e., it's not ready to take votes) until yet another signatory signs. When that should be ensured it's expected to place the`AddSignatory` instruction
-into the same transaction as where the `CreateProposal` is executed.
-When a first signer signs, the proposal enters to the `SigningOff` state. The `SigningOff` state has got the same sense as the `Draft` state.
+The proposal moves to `Voting` state only when all signatories sign the "drafted" proposal (we consider "drafted" proposal one in `Draft` or `SigningOff` state).
+That way one may ensure that the proposal won't leave the "drafted" state until all defined signatories confirms the proposal is prepared
+to be voted on (i.e., until not ready to take votes).
+
+Calling the `AddSignatory` instruction is not required as for moving the proposal to `Voting` state at least the signatory of the creator is required.
+When a signatory has been appointed by calling the `AddSignatory` instruction then signature of the creator is not demanded
+for the proposal to move to `Voting` state.
+When a first signatory signs the proposal by call of the `SignOffProposal` instruction the proposal moves to `SigningOff` state
+and no other signature can be added.
+When all signatories (or the creator herself) sign the proposal the proposal moves to `Voting` state
+immediately at the call of `SignOffProposal` instruction.
+
 Until the proposal is in `Voting` state one can call `InsertTransaction` instruction to bound instructions to an option of the proposal.
-The option is defined by an index within the array structure and that index is passed to `InsertTransaction` instruction. The call may be repeated for the same option to place in multiple instructions.
+The option is defined by an index within the array structure and that index is passed to `InsertTransaction` instruction.
+The call may be repeated for the same option to place in multiple instructions.
 
 **NOTE:** On creating a proposal, there is deposited
 [a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_create_proposal.rs#L188)
@@ -186,7 +206,7 @@ It's the benefit of UI that such maintenance operations are handled automaticall
 
 ### Voting
 
-When all transactions are in place and every signatory was acknowledged by call of
+When all signatories considers proposal is ready to be signed When all transactions are in place and every signatory was acknowledged by call of
 [`SignOffProposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L168)
 instruction then with the last signature the proposal is moved to `Voting` state.
 In this state the proposal is ready to take votes.
@@ -269,6 +289,9 @@ For the owner to withdraw the funds he has to wait until voting period ends or w
 
 The SPL Governance creates an account [`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33) for each voter (more precisely, for every wallet). It keeps a record of how many tokens were locked (giving the voting power) and what's the number of active proposals the voter voted for is (to determine whether the withdrawal is possible).
 
+**TODO:** write about the `delegation` feature
+**TODO:** write about VoteRecord being created when the vote is casted
+**TODO:** write a bit about different types of vote - there is an abstain vote not mentioned anywhere in text
 
 ## Plugin System
 
