@@ -152,8 +152,6 @@ instructions for particular options that are executed on when the option success
 After creation, the proposal goes through lifecycle defined by [several states](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L101). The lifecycle state designates permitted operations
 over the proposal - only at certain state the proposal can be cancelled, voted for, transaction execution can be run etc.
 
-<!-- TODO: maybe to add different types of proposals -->
-
 ### Different types of governances
 
 When one checks the SPL Governance program in version 3.1 one may notice that different types of governances can be created.
@@ -258,7 +256,16 @@ by calling appropriate instruction (called by the proposal creator).
 
 ## Survey type proposals
 
-**TODO:** ... write about survey type proposals: https://github.com/solana-labs/solana-program-library/pull/3847
+There is one special "type" of proposal that goes through the lifecycle slightly differently than usual proposals.
+
+There is one special "type" of proposal that goes through the lifecycle slightly differently then usual proposals.
+I used the word "type" in quotes because it is not a real type of proposal but just a proposal with a specific attributes.
+When you create a proposal without any instructions attached to it and deny vote type
+[is not permitted](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_create_proposal.rs#L40), it is considered a survey-type proposal.
+
+The survey-type proposal has no effect on the state of the blockchain and is used to collect the opinion of the community.
+
+The survey-type proposal does not progress to the `Succeeded` state and immediately moves to the `Completed` state when the voting ends.
 
 
 ## Voting and Locking Tokens
@@ -287,9 +294,15 @@ For the voter to employ their voting power, they must lock the tokens to the `re
 a [deposit call](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_deposit_governing_tokens.rs). The tokens are locked until any active proposal where the voter voted exists.
 For the owner to withdraw the funds he has to wait until voting period ends or when he relinquishes his votes.
 
-The SPL Governance creates an account [`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33) for each voter (more precisely, for every wallet). It keeps a record of how many tokens were locked (giving the voting power) and what's the number of active proposals the voter voted for is (to determine whether the withdrawal is possible).
+The SPL Governance creates an account [`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33) for each voter (more precisely, for every wallet). 
+This record keeps track of how many tokens were locked, as well as the number of active proposals that the voter has voted for (to determine whether a withdrawal is possible).
 
-**TODO:** write about the `delegation` feature
+The number of locked tokens under the `token owner record` determines the voting power of the owner of the record.
+The owner may delegate this voting power to another wallet by setting up
+[the delegate field](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L80)
+in the `token owner record`.
+Only one delegate can be defined per token owner record.
+
 **TODO:** write about VoteRecord being created when the vote is casted
 **TODO:** write a bit about different types of vote - there is an abstain vote not mentioned anywhere in text
 
