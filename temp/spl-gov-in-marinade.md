@@ -303,8 +303,24 @@ The owner may delegate this voting power to another wallet by setting up
 in the `token owner record`.
 Only one delegate can be defined per token owner record.
 
-**TODO:** write about VoteRecord being created when the vote is casted
-**TODO:** write a bit about different types of vote - there is an abstain vote not mentioned anywhere in text
+### Vote record
+
+[Casting a vote](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_cast_vote.rs#L31)
+means to add the voting weight to the proposal option.
+The voter can choose to vote for or against the proposal or to abstain from voting.
+The type of vote is defined by the
+[`Vote` enum](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/vote_record.rs#L48)
+and passed as an argument in the
+[cast vote instruction](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_cast_vote.rs#LL34C14-L34C14).
+
+
+When a voter casts their vote, information about this action is written to two places in the Solana blockchain.
+First, the proposal account is updated with the summary of the
+[weight of votes](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L60) for each option, which is used during proposal finalization (`vote records` are not used for this purpose).
+
+
+Second, a [`vote record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/vote_record.rs)
+account is created. This record gathers information such as the casted voting weight, type of vote, etc. The existence of the record attests that a vote has been cast from a particular `token owner record` for a particular proposal. The vote record is used to prevent double voting and for historical purposes.
 
 ## Plugin System
 
