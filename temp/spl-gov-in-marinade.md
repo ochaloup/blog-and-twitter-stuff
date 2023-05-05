@@ -29,12 +29,14 @@ A shared instance of the program is deployed at `GovER5Lthms3bLBqWub97yVrMmEogzX
 While [it's recommended](https://discord.com/channels/910194960941338677/945282322318655528/1079728429697597462)
 for DAO in many cases to do [own deployment](https://github.com/solana-labs/solana-program-library/tree/governance-v3.1.0/governance#1-dao-owned-instance)
 of the program. That way to take the code from the repository and publish it to the network with a unique address.
+An advantage of such approach is that the DAO can manage when the program is upgraded,
+a disadvantage could be the DAO has to maintain the program and its upgrades itself.
 
 SPL Governance provides a UI to do DAO management easily. That's available at https://app.realms.today/realms
 (to work on devnet, add [`?cluster=devnet`](https://app.realms.today/realms?cluster=devnet) into address bar).
 The source code of the UI is available at the repository https://github.com/solana-labs/governance-ui.
 
-**NOTE:** When own deployment of program is done the new address should be configured into UI, into to list of known instances.
+**NOTE:** When own deployment of program is done the new address should be configured into UI, into a list of known instances.
  That mostly means [creating a PR](https://github.com/solana-labs/governance-ui/pull/1534) with the configuration.
 
 To integrate the SPL Governance into your own application, you can use the Typescript SDK under the Oyster repository
@@ -385,7 +387,7 @@ Let's discuss the most important parts of the UI:
   show a list of processed transactions. The `Rules` tab provides a way to change `Governance` parameters
   (similar to `Params` subpage), and the `Treasury` and `NFTs` tabs provide information about the assets.
 
-  ![Image](./05_03_dao_wallets.png "Governace wallets screen")
+  ![Image](./05_03_dao_wallets.png "Governance wallets screen")
 
   - **4.) Programs** - This section allows the user to manage the `upgrade authority` of programs and do code upgrades.
     The `New program` button creates a new program type `Governance` (see _Different types of governances_)
