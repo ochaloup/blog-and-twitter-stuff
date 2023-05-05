@@ -112,8 +112,7 @@ The Governance account structure is documented
 But let's have a look at the account hierarchy in more detail. We will start with the picture of all available accounts and then
 have a description of them. 
 
-<!-- TODO: simplify the data structure, remove VSR, remove lifecycle -->
-![Image](./realm-info.png "Realm data structures")
+![Image](./spl-gov-account-structure.png "Realm account data structures")
 
 
 The top-level account (representing a DAO as explained above) is
@@ -160,14 +159,12 @@ Those are the
 governance account types.
 All of those are
 [considered deprecated](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/NOTES.md#asset-specific-governances-are-deprecated)
-but as of now heavily used within Governance UI
-because of
-[technical limitations](https://discord.com/channels/910194960941338677/910566058740568094/1098293000028831824).
+but as of now heavily used within Governance UI (because of some
+[technical limitations](https://discord.com/channels/910194960941338677/910566058740568094/1098293000028831824)).
 
 ## Lifecycle of a proposal
 
-<!-- TODO: place only lifecycle from this picture -->
-![Image](./realm-info.png "Realm data structures")
+![Image](./spl-gov-proposal-states.png "Proposal states")
 
 As said before the proposal goes through lifecycle defined by several states. Let's have a look at them in more details.
 
@@ -295,7 +292,8 @@ a [deposit call](https://github.com/solana-labs/solana-program-library/blob/gove
 For the owner to withdraw the funds he has to wait until voting period ends or when he relinquishes his votes.
 
 The SPL Governance creates an account [`token owner record`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/token_owner_record.rs#L33) for each voter (more precisely, for every wallet). 
-This record keeps track of how many tokens were locked, as well as the number of active proposals that the voter has voted for (to determine whether a withdrawal is possible).
+This record keeps track of how many tokens were locked, as well as the number of active proposals
+that the voter has voted for and number of un-relinquished proposals to determine whether a withdrawal is possible.
 
 The number of locked tokens under the `token owner record` determines the voting power of the owner of the record.
 The owner may delegate this voting power to another wallet by setting up
@@ -335,4 +333,75 @@ but mostly anything can be used for the calculation.
 
 ## Governance UI
 
-**TODO:** write a bit about governance ui and how the terms used there match to code
+You most likely use the web-based UI as the primary point of interaction with the SPL Governance program.
+Therefore, we will conclude this article with a brief overview of the discussed concepts in the context of the UI.
+
+### Creating a Realm
+
+When you navigate to [the Realms page](https://app.realms.today/) , you can see the list of existing realms.
+Clicking on the `Create DAO` button presents you with three options to choose from:
+
+![Image](./01_creating_dao.png "Creating dao, three options")
+
+All three options present a walkthrough wizard where different default parameters are predefined,
+and a different set of parameters has to be provided. The `Multi-Signature` wallet option creates
+a `Realm` where only the council is expected to vote, and community is not enabled. The `NFT Community DAO` option creates 
+a `Realm` where voting power comes from ownership of NFTs. It is a voter weight plugin that provides functionality
+for voting power calculation. The `Community Token DAO` is meant for community-driven DAOs
+where both the `council` and `community` are enabled.
+
+When a `Realm` is created, the main Realm configuration page is presented. When you change some config,
+it is usually done via a configuration page that ends up creating a `proposal`.
+The proposal is a usual way to change the configuration of the `Realm` and `Governance`.
+
+![Image](./02_main_screen_with_desc.png "Main configuration screen")
+
+Let's discuss the most important parts of the UI:
+
+- **1.) My governance power** - After connecting the wallet, the user can deposit tokens to the `Realm`
+  and manage their delegation of voting power, withdraw tokens, and check on their created proposals.
+  The `My Proposals` button shows proposals that the token owner has voted for, including active and unrelinquished ones.
+  The menu names the _unrelinquished proposals_ as `Unreleased Proposals`. To withdraw tokens, the user has
+  to relinquish all proposals (i.e., `Release All` button).
+  Even for finished proposals, the user has to do the unrelinquish action to withdraw tokens.
+
+  ![Image](./03_01_my_governance_power.png "My governance power screen")
+
+- **2.) Params** - This section shows the parameters of the `Realm` and allows for changes. The user can change
+  the configuration of the `Realm` (`RealmConfig`) in the top right corner by clicking on `Config -> Change Config`.
+  All `Governance` instances are listed below, and the voting settings can be changed by clicking
+  on the `Change Config` button. There are other tabs on the right side of the list of `Governance` instances,
+  including `Accounts`, where the user can list all related accounts to the Governance.
+  The `Accounts` tab lists the `native treasury` wallet, ATA token wallets managed by the governance, program accounts
+  or a mint if available
+
+  ![Image](./04_02_parameters.png "Realm parameters screen")
+
+- **3.) DAO Wallets** - This section provides a different perspective on the `Governance` accounts.
+  Importantly, the user can create a new Governance instance by clicking on the `New DAO wallet` button.
+  The list below the button represents the addresses of the `native treasury` wallets (every `Governance` has one).
+  To add an asset to a wallet, the user can click on the `Add Asset` button at the to right side.
+  A new token account can be crated so. The tabs on the right side of the list of `native treasury` addresses
+  show a list of processed transactions. The `Rules` tab provides a way to change `Governance` parameters
+  (similar to `Params` subpage), and the `Treasury` and `NFTs` tabs provide information about the assets.
+
+  ![Image](./05_03_dao_wallets.png "Governace wallets screen")
+
+  - **4.) Programs** - This section allows the user to manage the `upgrade authority` of programs and do code upgrades.
+    The `New program` button creates a new program type `Governance` (see _Different types of governances_)
+    and takes management power for the program.
+
+  ![Image](./06_04_programs.png "Programs screen")
+
+- **5.) New proposal** - The last section we will touch on is the `New proposal` screen. Here, the user can create
+  a new proposal that can be chosen from a list of common proposals (such as mint token, transfer, etc.) or pass a base64-encoded transaction as a proposal. The switch `Vote by council` defines if the proposal will be created
+  as a council or community proposal (a council proposal is voted only by the council and vice versa).
+  At `Preview transaction` button, the user can check the instruction by simulating it.
+  The `Add proposal` button then creates a new proposal that is eventually listed on the main configuration page.
+
+  ![Image](./07_05_custom_transaction_proposal.png "Transaction proposal screen")
+
+## Conclusion
+
+In this article, we have discussed the SPL Governance program and its main concepts. We have also touched on the
+UI and its main features. We hope that this article will help you understand the SPL Governance program better.
