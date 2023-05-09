@@ -47,10 +47,11 @@ https://github.com/solana-labs/oyster/tree/main/packages/governance-sdk.
 
 A good complementary resource to this article could be the official 
 [README of the governance program](https://github.com/solana-labs/solana-program-library/blob/master/governance/README.md)
-at GitHub.
+at GitHub. A tutorial to UI is available at https://docs.realms.today.
 
 Then a nice technical description of the SPL Governance system can be found at sec3 article
 [Solana DAO Governance (Part 1): understanding SPL Governance Workflow](https://medium.com/coinmonks/solana-dao-governance-part-1-understanding-spl-governance-3ccf6d6912bc).
+A nice governance UI tutorial is available at [PsyFi documentation page](https://docs.psyoptions.io/psy-token-and-dao/governance-tutorials/governance-overview-and-walkthrough).
 
 ## Terms and glossary
 
