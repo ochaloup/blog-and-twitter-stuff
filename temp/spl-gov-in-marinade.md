@@ -192,6 +192,14 @@ immediately at the call of `SignOffProposal` instruction.
 Until the proposal is in `Voting` state one can call `InsertTransaction` instruction to bound instructions to an option of the proposal.
 The option is defined by an index within the array structure and that index is passed to `InsertTransaction` instruction.
 The call may be repeated for the same option to place in multiple instructions.
+As well, the insructions can be grouped into array of instructions that are executed atomically.
+The inserted [list of instructions](https://github.com/solana-labs/oyster/blob/040b7c89f757846f64c2436dbb58ecc4db8c5837/packages/governance-sdk/src/governance/withInsertTransaction.ts#L14)
+is stored in
+(a transaction account)[https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal_transaction.rs#L102] and at the time of execution the
+(`ProcessExecuteTransaction`)[https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_execute_transaction.rs]
+takes the transaction account and executes the instructions stored in it.
+The address of the transaction account is calculated from
+(the proposal publickey, index of the option and index of the instruction)[https://github.com/solana-labs/oyster/blob/040b7c89f757846f64c2436dbb58ecc4db8c5837/packages/governance-sdk/src/governance/accounts.ts#L1241].
 
 **NOTE:** On creating a proposal, there is deposited
 [a certain amount of SOLs](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_create_proposal.rs#L188)
