@@ -90,10 +90,11 @@ which may use the DAO wallet as fee payer.
 
 The UI differentiates between the governance and DAO wallet but it's needed to know that these terms are coupled.
 
-**NOTE:** it's recommended to use
-[the DAO wallet](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/NOTES.md#dao-wallet) as a program authority,
-instead of using governance address itself
-(i.e., program defines an authority or admin field in its account that has got permission to do configuration changes)
+**NOTE:** It is highly recommended to utilize the address of
+[the DAO wallet](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/NOTES.md#dao-wallet)
+(i.e., `governance native treasury address`) as the authority for managing any assets under the `Realm`. 
+This includes matters such as a mint authority, a token owner authority, or a contract custom admin authority with permission to make configuration changes.
+While using the governance address for these purposes is possible, it is not considered a best practice.
 
 
 ### Proposal
