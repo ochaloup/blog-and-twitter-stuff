@@ -32,6 +32,8 @@ of the program. That way to take the code from the repository and publish it to 
 An advantage of such approach is that the DAO can manage when the program is upgraded,
 a disadvantage could be the DAO has to maintain the program and its upgrades itself.
 
+**NOTE:** For your own deployment use `Anchor` verifiable build.
+
 SPL Governance provides a UI to do DAO management easily. That's available at https://app.realms.today/realms
 (to work on devnet, add [`?cluster=devnet`](https://app.realms.today/realms?cluster=devnet) into address bar).
 The source code of the UI is available at the repository https://github.com/solana-labs/governance-ui.
@@ -90,10 +92,11 @@ which may use the DAO wallet as fee payer.
 
 The UI differentiates between the governance and DAO wallet but it's needed to know that these terms are coupled.
 
-**NOTE:** it's recommended to use
-[the DAO wallet](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/NOTES.md#dao-wallet) as a program authority,
-instead of using governance address itself
-(i.e., program defines an authority or admin field in its account that has got permission to do configuration changes)
+**NOTE:** It is highly recommended to utilize the address of
+[the DAO wallet](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/NOTES.md#dao-wallet)
+(i.e., `governance native treasury address`) as the authority for managing any assets under the `Realm`. 
+This includes matters such as a mint authority, a token owner authority, or a contract custom admin authority with permission to make configuration changes.
+While using the governance address for these purposes is possible, it is not considered a best practice.
 
 
 ### Proposal
@@ -130,20 +133,38 @@ The realm is defined by two groups of voting population - `council` and `communi
 Each voting population configure its `mint` while the field of `community_mint` can be defined only at the time of creation and cannot be changed later
 (different community mints are available with creating a new realm or with applying plugin functionality like
 [Voter Stake Registry (VSR)](https://github.com/blockworks-foundation/voter-stake-registry).
-Members of the population may create a proposal (with or without instructions to be executed on successful voting). Only members of the group
-that created the proposal may vote for it (i.e., the proposal is created by the council, and only council members may vote for it), while
-the members of the other population (members of the community) may veto the proposal.
-In addition, the realm consists of other configuration parameters, it defines the rule when a new governance instance can be created.
+Members of the population have the ability to create a proposal with or without instructions for execution upon successful voting.
+The creator of the proposal establishes the voting population.
+For example, when a proposal is created for the council to vote on, only council members are eligible to vote.
+However, members of the other population, in this case, the community, may veto the proposal.
 
-The configuration of the realm is held in separate Solana account which is the
-[`RealmConfig`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80) account.
-The realm config defines what type of token (liquid, membership, dormant/disabled) is used for a particular group of voters
-or usage of a plugin for voter weight calculation (e.g., VSR plugin).
+In addition, the realm encompasses other configuration parameters, including the rule for when a new governance instance can be created.
+A new governance instance can be created when the instruction is signed by the Realm `authority` address,
+by a council member who owns at least one token, or by a community member who possesses enough voting power
+as specified in the Realm account.
+
+The configuration of the realm is held in a separate Solana account known as the
+[`RealmConfigAccount`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80).
+The `Realm` structure includes a field called `realm_config` that stores a public key pointing to a distinct account of `RealmConfigAccount`.
+This account split is the result of Solana's inability to support account size changes in the past.
+The `RealmConfigAccount` specifies the type of token (liquid, membership, dormant/disabled) used for a specific group of voters
+or plugin usage for voter weight calculation (e.g., VSR plugin).
 
 The realm groups a few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80) accounts.
 Governance is a basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
-voting time elapses (`vote tipping`), if vetoing proposals is permitted, and as last but not least,
-it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
+voting time elapses (known as `vote tipping`), if vetoing proposals is permitted,
+and ultimately sign the transactions to be executed using governance and native treasury (DAO Wallet) keys.
+
+**NOTE:** As any other account mentioned in this listing the governance account is a PDA account that's seeded with the realm account address
+and a `governance_seed`. Previously it the `governance_seed` was an pubkey of governed program but this concept is obsolete now.
+The the `governance seed` should be considered as an arbitrary public key that's used only to seed the governance account address.
+The `Governance` may manage whatever asset (token, program, ...) and it's not limited to a single governed program address.
+
+**NOTE:** Similar to all other accounts listed here, the governance account is a PDA account.
+It is seeded with the realm address and a `governance_seed`. Previously, the `governance_seed` was a public key of the governed program,
+but this concept is now considered obsolete. The `governance_seed` should be treated as an arbitrary public key
+used solely to seed the governance account address. The `Governance` has the ability to manage any asset,
+whether it be a token, program, or other, and is not limited to a single governed program address.
 
 The last part of the account structure hierarchy is the
 [`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105)
@@ -222,8 +243,8 @@ The voting is done by calling
 Voting time is defined by
 [`voting_base_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L43)
 governance attribute and can be prolonged by setting-up
-[`voting_cool_off_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L65)
-when only negative votes (`deny` and `vetoes`) are accepted.
+[`voting_cool_off_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L65).
+At `voting_cool_off_time` period the user may only either cast negative votes (`deny` and `vetoes`) or relinquish his vote.
 The voting may be finished before the voting time elapses when
 [`vote tipping`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L45) is enabled.
 
@@ -265,8 +286,6 @@ by calling appropriate instruction (called by the proposal creator).
 ## Survey type proposals
 
 There is one special "type" of proposal that goes through the lifecycle slightly differently than usual proposals.
-
-There is one special "type" of proposal that goes through the lifecycle slightly differently then usual proposals.
 I used the word "type" in quotes because it is not a real type of proposal but just a proposal with a specific attributes.
 When you create a proposal without any instructions attached to it and deny vote type
 [is not permitted](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_create_proposal.rs#L40), it is considered a survey-type proposal.
@@ -379,7 +398,7 @@ Let's discuss the most important parts of the UI:
   ![Image](./03_01_my_governance_power.png "My governance power screen")
 
 - **2.) Params** - This section shows the parameters of the `Realm` and allows for changes. The user can change
-  the configuration of the `Realm` (`RealmConfig`) in the top right corner by clicking on `Config -> Change Config`.
+  the configuration of the `Realm` (stored in `RealmConfigAccount`) in the top right corner by clicking on `Config -> Change Config`.
   All `Governance` instances are listed below, and the voting settings can be changed by clicking
   on the `Change Config` button. There are other tabs on the right side of the list of `Governance` instances,
   including `Accounts`, where the user can list all related accounts to the Governance.
