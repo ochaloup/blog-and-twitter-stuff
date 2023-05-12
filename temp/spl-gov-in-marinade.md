@@ -131,13 +131,19 @@ The realm is defined by two groups of voting population - `council` and `communi
 Each voting population configure its `mint` while the field of `community_mint` can be defined only at the time of creation and cannot be changed later
 (different community mints are available with creating a new realm or with applying plugin functionality like
 [Voter Stake Registry (VSR)](https://github.com/blockworks-foundation/voter-stake-registry).
-Members of the population may create a proposal (with or without instructions to be executed on successful voting). Only members of the group
-that created the proposal may vote for it (i.e., the proposal is created by the council, and only council members may vote for it), while
-the members of the other population (members of the community) may veto the proposal.
-In addition, the realm consists of other configuration parameters, it defines the rule when a new governance instance can be created.
+Members of the population have the ability to create a proposal with or without instructions for execution upon successful voting.
+The creator of the proposal establishes the voting population.
+For example, when a proposal is created for the council to vote on, only council members are eligible to vote.
+However, members of the other population, in this case, the community, may veto the proposal.
+
+In addition, the realm encompasses other configuration parameters, including the rule for when a new governance instance can be created.
+A new governance instance can be created when the instruction is signed by the Realm `authority` address,
+by a council member who owns at least one token, or by a community member who possesses enough voting power
+as specified in the Realm account.
 
 The configuration of the realm is held in separate Solana account which is the
-[`RealmConfig`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80) account.
+[`RealmConfigAccount`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80).
+The Realm structure contains a field `realm_config` which stores a public key that refers to a separate account of `RealmConfigAccount`.
 The realm config defines what type of token (liquid, membership, dormant/disabled) is used for a particular group of voters
 or usage of a plugin for voter weight calculation (e.g., VSR plugin).
 
@@ -145,6 +151,17 @@ The realm groups a few or multiple [`Governance`](https://github.com/solana-labs
 Governance is a basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
 voting time elapses (`vote tipping`), if vetoing proposals is permitted, and as last but not least,
 it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
+
+**NOTE:** As any other account mentioned in this listing the governance account is a PDA account that's seeded with the realm account address
+and a `governance_seed`. Previously it the `governance_seed` was an pubkey of governed program but this concept is obsolete now.
+The the `governance seed` should be considered as an arbitrary public key that's used only to seed the governance account address.
+The `Governance` may manage whatever asset (token, program, ...) and it's not limited to a single governed program address.
+
+**NOTE:** Similar to all other accounts listed here, the governance account is a PDA account.
+It is seeded with the realm address and a `governance_seed`. Previously, the `governance_seed` was a public key of the governed program,
+but this concept is now considered obsolete. The `governance_seed` should be treated as an arbitrary public key
+used solely to seed the governance account address. The `Governance` has the ability to manage any asset,
+whether it be a token, program, or other, and is not limited to a single governed program address.
 
 The last part of the account structure hierarchy is the
 [`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105)
