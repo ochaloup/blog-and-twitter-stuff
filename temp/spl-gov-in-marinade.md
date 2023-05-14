@@ -141,16 +141,17 @@ A new governance instance can be created when the instruction is signed by the R
 by a council member who owns at least one token, or by a community member who possesses enough voting power
 as specified in the Realm account.
 
-The configuration of the realm is held in separate Solana account which is the
+The configuration of the realm is held in a separate Solana account known as the
 [`RealmConfigAccount`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/realm_config.rs#L80).
-The Realm structure contains a field `realm_config` which stores a public key that refers to a separate account of `RealmConfigAccount`.
-The realm config defines what type of token (liquid, membership, dormant/disabled) is used for a particular group of voters
-or usage of a plugin for voter weight calculation (e.g., VSR plugin).
+The `Realm` structure includes a field called `realm_config` that stores a public key pointing to a distinct account of `RealmConfigAccount`.
+This account split is the result of Solana's inability to support account size changes in the past.
+The `RealmConfigAccount` specifies the type of token (liquid, membership, dormant/disabled) used for a specific group of voters
+or plugin usage for voter weight calculation (e.g., VSR plugin).
 
 The realm groups a few or multiple [`Governance`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L80) accounts.
 Governance is a basic configuration unit that defines limits for creating proposals, voting time, thresholds, if voting may be finished before
-voting time elapses (`vote tipping`), if vetoing proposals is permitted, and as last but not least,
-it signs the transactions to be executed (with governance and native treasury (DAO Wallet) keys).
+voting time elapses (known as `vote tipping`), if vetoing proposals is permitted,
+and ultimately sign the transactions to be executed using governance and native treasury (DAO Wallet) keys.
 
 **NOTE:** As any other account mentioned in this listing the governance account is a PDA account that's seeded with the realm account address
 and a `governance_seed`. Previously it the `governance_seed` was an pubkey of governed program but this concept is obsolete now.
@@ -240,8 +241,8 @@ The voting is done by calling
 Voting time is defined by
 [`voting_base_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L43)
 governance attribute and can be prolonged by setting-up
-[`voting_cool_off_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L65)
-when only negative votes (`deny` and `vetoes`) are accepted.
+[`voting_cool_off_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L65).
+At `voting_cool_off_time` period the user may only either cast negative votes (`deny` and `vetoes`) or relinquish his vote.
 The voting may be finished before the voting time elapses when
 [`vote tipping`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L45) is enabled.
 
@@ -283,8 +284,6 @@ by calling appropriate instruction (called by the proposal creator).
 ## Survey type proposals
 
 There is one special "type" of proposal that goes through the lifecycle slightly differently than usual proposals.
-
-There is one special "type" of proposal that goes through the lifecycle slightly differently then usual proposals.
 I used the word "type" in quotes because it is not a real type of proposal but just a proposal with a specific attributes.
 When you create a proposal without any instructions attached to it and deny vote type
 [is not permitted](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/process_create_proposal.rs#L40), it is considered a survey-type proposal.
@@ -397,7 +396,7 @@ Let's discuss the most important parts of the UI:
   ![Image](./03_01_my_governance_power.png "My governance power screen")
 
 - **2.) Params** - This section shows the parameters of the `Realm` and allows for changes. The user can change
-  the configuration of the `Realm` (`RealmConfig`) in the top right corner by clicking on `Config -> Change Config`.
+  the configuration of the `Realm` (stored in `RealmConfigAccount`) in the top right corner by clicking on `Config -> Change Config`.
   All `Governance` instances are listed below, and the voting settings can be changed by clicking
   on the `Change Config` button. There are other tabs on the right side of the list of `Governance` instances,
   including `Accounts`, where the user can list all related accounts to the Governance.
