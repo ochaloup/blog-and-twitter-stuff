@@ -166,7 +166,7 @@ but this concept is now considered obsolete. The `governance_seed` should be tre
 used solely to seed the governance account address. The `Governance` has the ability to manage any asset,
 whether it be a token, program, or other, and is not limited to a single governed program address.
 
-The last part of the account structure hierarchy is the
+The next part of the account structure hierarchy is the
 [`Proposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L105)
 The proposal is created within one particular governance.
 Proposal is bounded to a single mint (`governing_token_mint`) that defines the population (council or community) that may vote for it.
@@ -174,6 +174,13 @@ The proposal consists of several options (determined by a string label) that the
 instructions for particular options that are executed on when the option successful passed.
 After creation, the proposal goes through lifecycle defined by [several states](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L101). The lifecycle state designates permitted operations
 over the proposal - only at certain state the proposal can be cancelled, voted for, transaction execution can be run etc.
+
+Then the `Proposal` may be, but cannot be, linked with some instructions that will be executed when the proposal passes sucesfully through voting.
+The list of instructions is defined in one or multiple
+[`ProposalTransaction`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal_transaction.rs)
+ accounts. The account consists of list of public keys that are expected to be provided at time of `Execution`, the transaction call data and then
+ [metadata and configuration](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal_transaction.rs#L86).
+ 
 
 ### Different types of governances
 
@@ -272,7 +279,11 @@ When the proposal ends in the `Succeeded` state, the instructions bound to the p
 Besides the proposal final state, each option marks its final state separately.
 Only those options that were marked as [`Succeeded`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal.rs#L41) may execute attached instructions with the call of [`ExecuteTransaction`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L196).
 
-The governance may configure [`min_transaction_hold_up_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L37), which adds the time when the instruction can be started to be executed. Only after that number of seconds elapsed after proposal finalization the instruction may be executed.
+The governance may be configured with [`min_transaction_hold_up_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/governance.rs#L37), which defines the minimum time that the proposal has to wait after the Proposal voting ends before the instruction can be started to be executed.
+Every transaction holds the configuration parameter
+[`hold_up_time`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/proposal_transaction.rs#L99)
+that cannot be lower to minimum configured at governance (but it can be higher to that number)
+and is defined by the creator of the proposal.
 
 When all instructions are executed the proposal is moved to final [`Completed`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/state/enums.rs#L121) state.
 
