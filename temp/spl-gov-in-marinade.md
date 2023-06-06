@@ -273,6 +273,17 @@ When it happens the proposal is moved to a final `Cancelled` state.
 Only the owner of the proposal is permitted to call the instruction [`CancelProposal`](https://github.com/solana-labs/solana-program-library/blob/governance-v3.1.0/governance/program/src/processor/mod.rs#L177).
 The term owner means a token owner record account (see below) that was inserted into the proposal account on its creation.
 
+The wallet may vote `Yes` (meaning adding a positive vote for the proposal to pass),
+or may vote `No` (meaning voting to deny the proposal) or may vote to `Abstain`.
+The
+[proposal option](https://github.com/solana-labs/solana-program-library/blob/master/governance/program/src/state/proposal.rs#L54)
+sucessfully passes when the option gains at least the number of votes equal to
+[`community/council_vote_threshold`](https://github.com/solana-labs/solana-program-library/blob/master/governance/program/src/state/governance.rs#L32)
+configured as parameter in `Governance`, and the number of `Yes` votes is higher than the number of deny `No` votes.
+The same number of positive (`Yes`) and deny (`No`) votes is a tie and it is resolved as `Defeated`.
+The proposal passes when there is at least on proposal option that succeeded.
+
+
 ### Finalization
 
 When the proposal ends in the `Succeeded` state, the instructions bound to the proposal's option may be executed.
