@@ -1,22 +1,26 @@
-import * as anchor from "@project-serum/anchor"
-import { Program, AnchorProvider, IdlTypes, IdlAccounts, AnchorError, IdlEvents } from "@project-serum/anchor"
+import * as anchor from "@coral-xyz/anchor"
+import { Program, AnchorProvider, IdlTypes, IdlAccounts, AnchorError, IdlEvents } from "@coral-xyz/anchor"
 import { Keypair, PublicKey } from '@solana/web3.js'
 import * as idl from "../target/types/typescript_fetch"
 
 import { expect } from "chai"
 import { inspect, isDeepStrictEqual } from 'util'
 
-describe("typescript-fetch", () => {
-  anchor.setProvider(anchor.AnchorProvider.env())
+// Anchor type declaration
+// Type of Account that is fetch (created by initialize_data instruction)
+type Data = IdlAccounts<idl.TypescriptFetch>["data"]
+// Type of enum and struct used in Data account
+type DataEnum = IdlTypes<idl.TypescriptFetch>["DataEnum"]
+type DataStruct = IdlTypes<idl.TypescriptFetch>["DataStruct"]
+// Event emitted when Data account created
+const DATA_EVENT_NAME = "DataEvent"
+type DataEvent = IdlEvents<idl.TypescriptFetch>[typeof DATA_EVENT_NAME]
 
+describe("typescript-fetch", () => {
+  // using Anchor tools to get a provider and load program belonging to the workspace
+  anchor.setProvider(anchor.AnchorProvider.env())
   const program = anchor.workspace.TypescriptFetch as Program<idl.TypescriptFetch>
   const provider = anchor.getProvider() as AnchorProvider
-
-  type Data = IdlAccounts<idl.TypescriptFetch>["data"]
-  type DataEnum = IdlTypes<idl.TypescriptFetch>["DataEnum"]
-  type DataStruct = IdlTypes<idl.TypescriptFetch>["DataStruct"]
-  const DATA_EVENT_NAME = "DataEvent"
-  type DataEvent = IdlEvents<idl.TypescriptFetch>["DataEvent"]
 
 
   it.only("Initialized", async () => {

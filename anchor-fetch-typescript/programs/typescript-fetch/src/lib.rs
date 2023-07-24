@@ -3,13 +3,16 @@ use crate::error::TypescriptFetchError;
 
 mod error;
 
+#[constant]
+pub const PROGRAM_ID: &str = "8tKNmp7w19TCH9cvg7qTXR3etBqnofHgkTMT2ybxJ7Xx";
+// if PROGRAM_ID is equal to declare_id! macro is checked by tests
 declare_id!("8tKNmp7w19TCH9cvg7qTXR3etBqnofHgkTMT2ybxJ7Xx");
 
 #[program]
 pub mod typescript_fetch {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize_data(ctx: Context<InitializeData>) -> Result<()> {
         ctx.accounts
             .data
             .set_inner(Data {
@@ -19,6 +22,9 @@ pub mod typescript_fetch {
                 struct_var: DataStruct { index: 1 }
             });
 
+        emit!(DataEvent{
+            int_var: ctx.accounts.data.int_var
+        });
 
         Ok(())
     }
@@ -26,21 +32,14 @@ pub mod typescript_fetch {
     pub fn error_me(_ctx: Context<ErrorMe>) -> Result<()> {
         return Err(TypescriptFetchError::ErrorMeError.into())
     }
-
-    pub fn event_me(ctx: Context<EventMe>) -> Result<()> {
-        emit!(DataEvent{
-            data: ctx.accounts.data.int_var
-        });
-        Ok(())
-    }
 }
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
+pub struct InitializeData<'info> {
     #[account(
         init,
         payer = payer,
-        space = 2 + 50 + 1,
+        space = 8 + 2 + 50 + 1 + 1,
     )]
     data: Account<'info, Data>,
 
@@ -52,12 +51,6 @@ pub struct Initialize<'info> {
 
 #[derive(Accounts)]
 pub struct ErrorMe {}
-
-#[derive(Accounts)]
-pub struct EventMe<'info> {
-    #[account()]
-    data: Account<'info, Data>
-}
 
 #[account]
 pub struct Data {
@@ -81,5 +74,16 @@ pub enum DataEnum {
 
 #[event]
 pub struct DataEvent {
-    pub data: u16,
+    pub int_var: u16,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn program_ids_match() {
+        assert_eq!(crate::ID, Pubkey::from_str(PROGRAM_ID).unwrap());
+    }
 }
