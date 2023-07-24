@@ -15,6 +15,7 @@ type DataStruct = IdlTypes<idl.TypescriptFetch>["DataStruct"]
 // Event emitted when Data account created
 const DATA_EVENT_NAME = "DataEvent"
 type DataEvent = IdlEvents<idl.TypescriptFetch>[typeof DATA_EVENT_NAME]
+const typescriptFetchErrors = anchor.parseIdlErrors(idl.IDL)
 
 describe("typescript-fetch", () => {
   // using Anchor tools to get a provider and load program belonging to the workspace
@@ -62,7 +63,10 @@ describe("typescript-fetch", () => {
       expect.fail("Error expected")
     } catch (e) {
       if (e instanceof AnchorError) {
+        console.log('>>>>>>>>>>>>>> tODO:', anchor.translateError(e, typescriptFetchErrors))
         expect(e.error.errorCode.number).eq(6000)
+        // check error.rs, expecting code 6000 that contains 'an error' string
+        expect(typescriptFetchErrors.get(e.error.errorCode.number)).contains("an error")
       } else {
         throw e
       }
