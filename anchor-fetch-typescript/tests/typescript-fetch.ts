@@ -7,6 +7,22 @@ import { expect } from "chai"
 import { inspect, isDeepStrictEqual } from 'util'
 
 // Anchor type declaration
+
+// IDL
+const TypescriptFetchIDL = idl.IDL
+type TypescriptFetchProgram = Program<idl.TypescriptFetch>
+
+// Loading constants from IDL defined in contract
+const programIdAsString = JSON.parse(
+  TypescriptFetchIDL.constants.find(x => x.name === 'PROGRAM_ID')!.value
+)
+export const PROGRAM_ID = new PublicKey(programIdasString)
+// TODO: work with seed constant
+// export const PRINT_MESSAGE_ACCOUNT_SEED = JSON.parse(
+//   TypescriptFetchIDL.constants.find(x => x.name === 'PRINT_MESSAGE_ACCOUNT_SEED')!
+//     .value
+// )
+
 // Type of Account that is fetch (created by initialize_data instruction)
 type Data = IdlAccounts<idl.TypescriptFetch>["data"]
 // Type of enum and struct used in Data account
@@ -15,13 +31,19 @@ type DataStruct = IdlTypes<idl.TypescriptFetch>["DataStruct"]
 // Event emitted when Data account created
 const DATA_EVENT_NAME = "DataEvent"
 type DataEvent = IdlEvents<idl.TypescriptFetch>[typeof DATA_EVENT_NAME]
-const typescriptFetchErrors = anchor.parseIdlErrors(idl.IDL)
+// Errors loading
+const typescriptFetchErrors = anchor.parseIdlErrors(TypescriptFetchIDL)
 
 describe("typescript-fetch", () => {
   // using Anchor tools to get a provider and load program belonging to the workspace
   anchor.setProvider(anchor.AnchorProvider.env())
-  const program = anchor.workspace.TypescriptFetch as Program<idl.TypescriptFetch>
   const provider = anchor.getProvider() as AnchorProvider
+
+  // to load from workspace, the info about program is loaded from Anchor.toml
+  const program: TypescriptFetchProgram = anchor.workspace.TypescriptFetch as Program<idl.TypescriptFetch>
+  // load program through IDL and programId loaded as constant
+  // const program: TypescriptFetchProgram = new Program<idl.TypescriptFetch>(TypescriptFetchIDL, PROGRAM_ID, provider)
+
 
 
   it.only("Initialized", async () => {

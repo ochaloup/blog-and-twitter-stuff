@@ -1,6 +1,10 @@
+[workspace]
+types = "tests/"
+
 [features]
 seeds = false
 skip-lint = false
+
 [programs.localnet]
 typescript_fetch = "8tKNmp7w19TCH9cvg7qTXR3etBqnofHgkTMT2ybxJ7Xx"
 
