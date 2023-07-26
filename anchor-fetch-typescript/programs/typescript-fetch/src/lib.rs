@@ -5,8 +5,11 @@ mod error;
 
 #[constant]
 pub const PROGRAM_ID: &str = "8tKNmp7w19TCH9cvg7qTXR3etBqnofHgkTMT2ybxJ7Xx";
-// if PROGRAM_ID is equal to declare_id! macro is checked by tests
+// PROGRAM_ID equality to declare_id! macro is checked by tests
 declare_id!("8tKNmp7w19TCH9cvg7qTXR3etBqnofHgkTMT2ybxJ7Xx");
+
+#[constant]
+pub const DEFAULT_INT_VAR: u16 = 30;
 
 #[program]
 pub mod typescript_fetch {
@@ -17,7 +20,7 @@ pub mod typescript_fetch {
             .data
             .set_inner(Data {
                 enum_var: DataEnum::One,
-                int_var: 30,
+                int_var: DEFAULT_INT_VAR,
                 string_var: "Hello world!".to_string(),
                 struct_var: DataStruct { index: 1 }
             });
