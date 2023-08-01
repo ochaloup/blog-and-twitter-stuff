@@ -165,8 +165,12 @@ describe("errors-handling", () => {
       expect(err).instanceOf(anchor.AnchorError)
       expect((err as anchor.AnchorError).name).to.equal("Error")
       expect((err as anchor.AnchorError).error.errorCode.number).to.equal(6000)
-      expect((err as anchor.AnchorError).error.errorCode.code).to.equal("ErrorMeError")
-      expect((err as anchor.AnchorError).error.errorMessage).to.equal("ErrorMe error")
+      expect((err as anchor.AnchorError).error.errorCode.code).to.equal(
+        "ErrorMeError"
+      )
+      expect((err as anchor.AnchorError).error.errorMessage).to.equal(
+        "ErrorMe error"
+      )
     }
   })
 
@@ -177,7 +181,6 @@ describe("errors-handling", () => {
       feePayer: provider.wallet.publicKey,
     }).add(ix)
     try {
-      // Error: failed to send transaction: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1770
       await provider.sendAndConfirm(tx, [], {
         skipPreflight: false, // Simulated
         preflightCommitment: "processed",
@@ -187,10 +190,64 @@ describe("errors-handling", () => {
       // Error: failed to send transaction: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1770
       expect(err).instanceOf(anchor.web3.SendTransactionError)
       expect((err as anchor.web3.SendTransactionError).name).to.equal("Error")
-      expect((err as anchor.web3.SendTransactionError).message).contains("custom program error: 0x1770")
-      const anchorError = anchor.AnchorError.parse((err as anchor.web3.SendTransactionError).logs)
+      expect((err as anchor.web3.SendTransactionError).message).contains(
+        "custom program error: 0x1770"
+      )
+      const anchorError = anchor.AnchorError.parse(
+        (err as anchor.web3.SendTransactionError).logs
+      )
       expect(anchorError).is.not.null // null on parsing failure
       expect(anchorError.error.errorCode.number).to.equal(6000)
+    }
+  })
+
+  it("Anchor Program: missing account client failure", async () => {
+    try {
+      // anchor verifies on client side when builder finishes on rpc() or instruction()
+      // await program.methods.okMe().accounts({}).instruction()
+      await program.methods.okMe().accounts({}).rpc()
+      // await program.methods.okMe().accountsStrict({}).rpc()
+      throw new Error("Expecting missing account from anchor")
+    } catch (err) {
+      // Error: Invalid arguments: me not provided.
+      expect(err).instanceOf(Error)
+      expect((err as Error).name).to.equal("Error")
+      expect((err as Error).message).contains("me not provided")
+      // console.log('error constructor:', err.constructor.name)
+    }
+  })
+
+  it("Program: missing account on chain simulation", async () => {
+    const ix = new anchor.web3.TransactionInstruction({
+      programId: program.programId,
+      keys: [],
+      data: Buffer.from([236, 197, 203, 252, 43, 137, 43, 69]),
+    })
+    const tx = new anchor.web3.Transaction({
+      ...latestBlockhash,
+      feePayer: provider.wallet.publicKey,
+    }).add(ix)
+
+    try {
+      await provider.sendAndConfirm(tx, [], {
+        skipPreflight: false, // Simulated
+        preflightCommitment: "processed",
+      })
+      throw new Error("Expecting anchor error thrown")
+    } catch (err) {
+      // Error: failed to send transaction: Transaction simulation failed: Error processing Instruction 0: custom program error: 0xbbd
+      expect(err).instanceOf(anchor.web3.SendTransactionError)
+      expect((err as anchor.web3.SendTransactionError).message).contains(
+        "custom program error: 0xbbd"
+      )
+      const anchorError = anchor.AnchorError.parse(
+        (err as anchor.web3.SendTransactionError).logs
+      )
+      expect(anchorError).is.not.null // null on parsing failure
+      expect(anchorError.error.errorCode.number).to.equal(3005)
+      expect(anchorError.error.errorMessage).to.equal(
+        "Not enough account keys given to the instruction"
+      )
     }
   })
 })
