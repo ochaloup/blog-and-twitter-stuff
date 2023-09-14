@@ -1,6 +1,7 @@
 import * as anchor from "@coral-xyz/anchor"
 import { expect } from "chai"
 import { ErrorsHandling } from "../target/types/errors_handling"
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet"
 
 describe("errors-handling", () => {
   anchor.setProvider(anchor.AnchorProvider.env())
@@ -17,6 +18,55 @@ describe("errors-handling", () => {
     latestBlockhash = await provider.connection.getLatestBlockhash()
   })
 
+  it.only("Just transfer", async () => {
+    const connection = new anchor.web3.Connection(provider.connection.rpcEndpoint, 'processed')
+    const feePayer = (provider.wallet as NodeWallet).payer
+    latestBlockhash = await connection.getLatestBlockhash()
+    const receiver = anchor.web3.Keypair.generate()
+    const ix = anchor.web3.SystemProgram.transfer({
+      fromPubkey: feePayer.publicKey,
+      toPubkey: receiver.publicKey,
+      lamports: anchor.web3.LAMPORTS_PER_SOL,
+    })
+    const messageV0 = new anchor.web3.TransactionMessage({
+      payerKey: feePayer.publicKey,
+      recentBlockhash: latestBlockhash.blockhash,
+      instructions: [ix],
+    }).compileToV0Message();
+    const tx = new anchor.web3.VersionedTransaction(messageV0)
+    tx.sign([feePayer])
+    const txSignature = await connection.sendTransaction(tx)
+    const startTime = Date.now()
+    // expecting process happens here
+    const confirmation = await connection.confirmTransaction({signature:txSignature, ...latestBlockhash}, 'processed')
+    expect(confirmation.value.err).to.be.null
+    console.log(confirmation, "current slot", await connection.getSlot())
+
+    await connection.getTransaction(txSignature, {commitment: 'confirmed', maxSupportedTransactionVersion: undefined})
+    // try {
+    //   await connection.getTransaction(txSignature, {commitment: 'confirmed', maxSupportedTransactionVersion: undefined})
+    //   throw new Error("Expecting error as we sent a versioned transaction but we expect to processes only the legacy one")
+    // } catch (err) {
+    //   expect(err.message).to.contains("maxSupportedTransactionVersion")
+    // }
+    const c = await connection.confirmTransaction({signature:txSignature, ...latestBlockhash}, 'confirmed')
+    console.log('confirmation stuff', c)
+    const txDataBefore = await connection.getTransaction(txSignature, {commitment: 'confirmed', maxSupportedTransactionVersion: 0})
+    expect(txDataBefore).to.be.null // based on timing issues this is not always true but it highly expected (tx was just acknowledged to be 'processed' it takes some time to be 'confirmed')
+
+    //// This prolongs the test significantly so it is commented out
+    console.log("Waiting for the slot expires, i.e., 150 blocks =~ 60s")
+    await new Promise((resolve) => setTimeout(resolve, 59 * 1000))
+    while (confirmation.context.slot + 150 < (await connection.getSlot())) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+    const confirmation2 = await connection.confirmTransaction(txSignature, "processed")
+    console.log("confirmation2", confirmation2, "current slot", await connection.getSlot())
+    expect(confirmation2.value.err).to.be.null
+    const txData = await connection.getTransaction(txSignature, {commitment: 'finalized', maxSupportedTransactionVersion: 0})
+    expect(txData.slot).to.equal(confirmation.context.slot)
+  })
+    
   it("SystemProgram Transfer: not signed, client not checked, not simulated", async () => {
     const fromKeypair = anchor.web3.Keypair.generate()
     const ix = anchor.web3.SystemProgram.transfer({
@@ -59,12 +109,13 @@ describe("errors-handling", () => {
       toPubkey: provider.wallet.publicKey,
       lamports: anchor.web3.LAMPORTS_PER_SOL,
     })
-    const txBuf = new anchor.web3.Transaction({
+    const tx = new anchor.web3.Transaction({
       ...latestBlockhash,
       feePayer: provider.wallet.publicKey,
     })
       .add(ix)
-      .serialize({ verifySignatures: false, requireAllSignatures: false })
+    tx.partialSign(fromKeypair) // partial sign
+    const txBuf = tx.serialize({ verifySignatures: false, requireAllSignatures: false })
     try {
       await provider.connection.sendRawTransaction(txBuf, {
         skipPreflight: false, // simulated == YES

@@ -2,6 +2,7 @@
     "cSpell.words": [
         "Blockhash",
         "Keypair",
-        "LAMPORTS"
+        "LAMPORTS",
+        "nodewallet"
     ]
 }
