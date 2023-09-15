@@ -5,6 +5,8 @@ import { WithSeedIx } from "../target/types/with_seed_ix";
 import { BinaryReader } from 'borsh';
 import {
   SystemProgram,
+  StakeProgram,
+  Authorized,
   PublicKey,
   Keypair,
   Transaction,
@@ -199,5 +201,24 @@ describe("with-seed-ix", () => {
       initializeInit: seededAddress
     }).rpc();
     expect(await readData(seededAddress)).to.equal(10)
+  });
+
+  // https://github.com/marinade-finance/governance-ui/blob/3659baf3d2d84e4f4bcd1e0c1dfe2c0578743de0/utils/instructionTools.ts#L244-L300
+  it("create stake account seeded", async () => {
+    // const seed = "seed"
+    const seed = 'nativestaking' + Date.now().toString()
+    const seededAddress = await PublicKey.createWithSeed(anchorProvider.wallet.publicKey, seed, StakeProgram.programId)
+    let tx = StakeProgram.createAccountWithSeed({
+      fromPubkey: anchorProvider.wallet.publicKey,
+      stakePubkey: seededAddress,
+      basePubkey: anchorProvider.wallet.publicKey,
+      seed,
+      lamports: LAMPORTS_PER_SOL,
+      authorized: new Authorized(anchorProvider.wallet.publicKey, anchorProvider.wallet.publicKey),
+    })
+    // seeded account needs to be signed by base pubkey
+    await anchorProvider.sendAndConfirm(tx, [])
+    let ai = await anchorProvider.connection.getAccountInfo(seededAddress)
+    console.log('account info seeded create; owner', ai.owner.toBase58(), 'lamports', ai.lamports)
   });
 });
